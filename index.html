@@ -16,17 +16,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#08090e; --surface:rgba(255,255,255,0.042); --surface2:rgba(255,255,255,0.062);
-  --line:rgba(255,255,255,0.09); --line2:rgba(148,166,255,0.24);
-  --accent:#94a6ff; --accent2:#c1a8ff; --accent-d:#5d6ed6;
-  --gold:#ecc77e; --green:#7fe6b4; --red:#ff8fa0; --orange:#ffb27a; --teal:#74dcd0;
-  --txt:#eef0f7; --txt2:#c4c9db; --muted:#868da4;
-  --glow:0 0 0 1px rgba(148,166,255,.16), 0 10px 34px rgba(80,96,200,.20);
+  --bg:#0a0c14; --surface:rgba(255,255,255,0.055); --surface2:rgba(255,255,255,0.08);
+  --line:rgba(255,255,255,0.10); --line2:rgba(157,177,255,0.32);
+  --accent:#9db1ff; --accent2:#cbb2ff; --accent-d:#6b7cf0;
+  --gold:#ffce6b; --green:#74f0bd; --red:#ff8fa0; --orange:#ffbb7e; --teal:#79e6da;
+  --txt:#f3f5fc; --txt2:#cdd2e6; --muted:#8b93ad;
+  --glow:0 0 0 1px rgba(157,177,255,.22), 0 12px 40px rgba(96,112,240,.30);
   --safe-top:env(safe-area-inset-top); --safe-bot:env(safe-area-inset-bottom);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:'Sora',-apple-system,system-ui,sans-serif;overscroll-behavior-y:contain;font-size:15px;}
-body{min-height:100vh;line-height:1.45;background:radial-gradient(1000px 560px at 50% -10%, rgba(148,166,255,.13), transparent 62%),radial-gradient(760px 460px at 92% 112%, rgba(193,168,255,.10), transparent 60%),var(--bg);background-attachment:fixed;}
+body{min-height:100vh;line-height:1.45;background:radial-gradient(1100px 600px at 50% -12%, rgba(157,177,255,.22), transparent 60%),radial-gradient(820px 520px at 94% 110%, rgba(203,178,255,.16), transparent 60%),radial-gradient(700px 700px at 4% 40%, rgba(121,230,218,.07), transparent 60%),var(--bg);background-attachment:fixed;}
 h1,h2,h3{font-family:'Space Grotesk',sans-serif;letter-spacing:.2px;}
 .hidden{display:none !important;}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
@@ -38,7 +38,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .brand .mark{width:26px;height:26px;border-radius:7px;filter:drop-shadow(0 0 5px rgba(148,166,255,.5));}
 .brand b{font-family:'Space Grotesk';font-size:14px;letter-spacing:4px;color:#f3f4fa;font-weight:600;}
 .icon-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:17px;color:var(--txt2);}
-.panel{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:17px;margin-bottom:14px;backdrop-filter:blur(8px);}
+.panel{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.035),transparent 34%),var(--surface);border:1px solid var(--line);border-radius:18px;padding:17px;margin-bottom:14px;backdrop-filter:blur(8px);box-shadow:0 6px 22px rgba(0,0,0,.22);}
 .panel-title{font-family:'Space Grotesk';font-size:11px;letter-spacing:2.5px;color:var(--muted);text-transform:uppercase;margin:0 0 13px;font-weight:600;display:flex;align-items:center;gap:8px;}
 .panel-title .dot{width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);}
 .hero{background:linear-gradient(150deg, rgba(148,166,255,.10), rgba(193,168,255,.05) 60%, transparent);border-color:var(--line2);}
@@ -53,7 +53,15 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .xpwrap{margin-top:15px;}
 .barlabel{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;letter-spacing:.5px;}
 .bar{height:8px;border-radius:6px;background:rgba(0,0,0,.28);overflow:hidden;position:relative;}
-.bar>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent-d),var(--accent));transition:width .5s cubic-bezier(.2,.8,.2,1);}
+.bar>i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--accent-d),var(--accent) 70%,var(--accent2));box-shadow:0 0 10px rgba(157,177,255,.5);transition:width .5s cubic-bezier(.2,.8,.2,1);}
+.badges{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.badge{text-align:center;padding:10px 4px;border-radius:13px;border:1px solid var(--line);background:rgba(0,0,0,.18);opacity:.4;filter:grayscale(.8);}
+.badge.on{opacity:1;filter:none;border-color:var(--line2);background:linear-gradient(160deg,rgba(157,177,255,.14),rgba(203,178,255,.06));box-shadow:var(--glow);}
+.badge .bi{font-size:22px;line-height:1.1;} .badge .bn{font-size:8.5px;color:var(--muted);letter-spacing:.3px;margin-top:3px;line-height:1.2;}
+.badge.on .bn{color:var(--txt2);}
+.chal{background:linear-gradient(150deg,rgba(255,206,107,.12),transparent 70%);border-color:rgba(255,206,107,.28);}
+@keyframes pulse{0%,100%{box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 0 0 rgba(157,177,255,.0)}50%{box-shadow:0 20px 60px rgba(0,0,0,.55),0 0 50px 6px rgba(157,177,255,.35)}}
+.sys.celebrate{animation:pop .28s cubic-bezier(.2,1.1,.4,1), pulse 1.6s ease-in-out infinite;border-color:var(--accent);}
 .hero-stats{display:flex;gap:9px;margin-top:15px;}
 .chip{flex:1;text-align:center;background:rgba(0,0,0,.22);border:1px solid var(--line);border-radius:13px;padding:10px 4px;}
 .chip b{display:block;font-family:'Space Grotesk';font-size:18px;font-weight:600;}
@@ -175,7 +183,7 @@ label{font-size:10.5px;color:var(--muted);letter-spacing:1px;display:block;margi
    ============================================================ */
 const $=(s,el=document)=>el.querySelector(s);
 const STORE='thesystem_v1';
-const APP_VERSION='1.1';
+const APP_VERSION='1.2';
 const ALL=[0,1,2,3,4,5,6];
 const DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function parseD(s){const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c);}
@@ -279,9 +287,35 @@ function defaultState(){return{
     {id:'r6',ic:'🛍️',name:'Buy something you want',cost:1500},
   ],
   redeemed:[], premium:false, lastOpen:todayStr(), lastRecap:null,
+  achievements:[], challengeClaimed:{},
 };}
-function load(){try{const r=JSON.parse(localStorage.getItem(STORE));return r&&r.profile?r:defaultState();}catch(e){return defaultState();}}
+function load(){try{const r=JSON.parse(localStorage.getItem(STORE));const s=r&&r.profile?r:defaultState();if(!s.achievements)s.achievements=[];if(!s.challengeClaimed)s.challengeClaimed={};return s;}catch(e){return defaultState();}}
 function save(){localStorage.setItem(STORE,JSON.stringify(S));}
+
+/* ---------- achievements ---------- */
+const ACHV=[
+  {id:'first',ic:'🌱',name:'First Step',desc:'Clear your first quest',g:30,test:()=>S.totalCompleted>=1},
+  {id:'q25',ic:'⚡',name:'Getting Going',desc:'Clear 25 quests',g:60,test:()=>S.totalCompleted>=25},
+  {id:'q100',ic:'💯',name:'Centurion',desc:'Clear 100 quests',g:120,test:()=>S.totalCompleted>=100},
+  {id:'q500',ic:'🏆',name:'Relentless',desc:'Clear 500 quests',g:300,test:()=>S.totalCompleted>=500},
+  {id:'s7',ic:'🔥',name:'Week Warrior',desc:'7-day streak',g:80,test:()=>streakInfo().longest>=7},
+  {id:'s30',ic:'🌋',name:'Unbreakable',desc:'30-day streak',g:200,test:()=>streakInfo().longest>=30},
+  {id:'s100',ic:'👑',name:'Legend',desc:'100-day streak',g:500,test:()=>streakInfo().longest>=100},
+  {id:'l5',ic:'⭐',name:'Rising',desc:'Reach level 5',g:60,test:()=>levelInfo(S.totalXp).level>=5},
+  {id:'l15',ic:'✨',name:'Ascended',desc:'Reach level 15',g:150,test:()=>levelInfo(S.totalXp).level>=15},
+  {id:'l30',ic:'🌟',name:'Elite',desc:'Reach level 30',g:300,test:()=>levelInfo(S.totalXp).level>=30},
+  {id:'rich',ic:'💰',name:'Treasury',desc:'Hold 1000 gold',g:50,test:()=>S.gold>=1000},
+  {id:'spend',ic:'🎁',name:'Treat Yourself',desc:'Redeem a reward',g:40,test:()=>S.redeemed.length>=1},
+  {id:'build',ic:'🛠️',name:'Architect',desc:'Have 6+ quests',g:40,test:()=>S.quests.length>=6},
+  {id:'til7',ic:'📝',name:'Reflective',desc:'Log 7 daily notes',g:60,test:()=>Object.values(S.history).filter(h=>h.til).length>=7},
+  {id:'pweek',ic:'🎯',name:'Flawless Week',desc:'7 streak days in a week',g:120,test:()=>weekStats().perfect>=7},
+];
+function checkAchievements(silent){
+  const newly=[];ACHV.forEach(a=>{if(!S.achievements.includes(a.id)&&a.test()){S.achievements.push(a.id);newly.push(a);}});
+  if(newly.length){const bonus=newly.reduce((s,a)=>s+a.g,0);S.gold+=bonus;save();
+    if(!silent){const a=newly[0];sysModal('ACHIEVEMENT UNLOCKED','<div class="sys-big" style="font-size:40px">'+a.ic+'</div><div class="sys-big" style="font-size:18px">'+a.name+'</div><p class="center">'+a.desc+'<br><span class="hl">+'+a.g+' Gold</span>'+(newly.length>1?'<br><span class="tiny">+'+(newly.length-1)+' more unlocked</span>':'')+'</p>',"NICE",null,true);}else{toast('🏅 '+newly[0].name+' unlocked');}}
+  return newly.length;
+}
 
 /* ---------- quests ---------- */
 function questsToday(){return S.quests.filter(q=>q.days.includes(dow()));}
@@ -294,14 +328,21 @@ function toggleQuest(q){
     S.stats[q.stat]=Math.max(0,S.stats[q.stat]-1);S.totalCompleted=Math.max(0,S.totalCompleted-1);
     if(!dayCounts(todayStr()))rec.streakBonus=false;save();render();
   }else{
-    const before=levelInfo(S.totalXp).level;
+    const before=levelInfo(S.totalXp).level,beforeRank=rankFor(before);
     rec.done.push(q.id);rec.meta=rec.meta||{};rec.meta[q.id]={t:q.title,s:q.stat,xp:q.xp};
     S.totalXp+=q.xp;S.gold+=q.gold;S.stats[q.stat]+=1;S.totalCompleted+=1;save();
     if(navigator.vibrate)navigator.vibrate(12);
-    const after=levelInfo(S.totalXp).level;
-    if(after>before){render();levelUpMsg(after);}else{toast('+'+q.xp+' XP · +'+q.gold+' G');render();}
-    if(dayCounts(todayStr())&&!rec.streakBonus){rec.streakBonus=true;S.totalXp+=30;S.gold+=25;save();
-      sysModal('STREAK SECURED','<div class="sys-big">🔥 '+streakInfo().cur+'-DAY STREAK</div><p class="center">Your keystone quests are done for today. Streak locked in.<br><span class="hl">+30 XP · +25 Gold</span></p>','CLOSE');render();}
+    const after=levelInfo(S.totalXp).level,afterRank=rankFor(after);
+    let shown=false;
+    if(afterRank!==beforeRank){render();rankUpMsg(afterRank);shown=true;}
+    else if(after>before){render();levelUpMsg(after);shown=true;}
+    else {toast('+'+q.xp+' XP · +'+q.gold+' G');render();}
+    if(dayCounts(todayStr())&&!rec.streakBonus){rec.streakBonus=true;const cur=streakInfo().cur,bonus=20+Math.min(80,cur*5);S.totalXp+=bonus;S.gold+=bonus;save();
+      const milestone=[7,14,30,50,100,200].includes(cur);
+      if(!shown||milestone){sysModal(milestone?'STREAK MILESTONE':'STREAK SECURED','<div class="sys-big">🔥 '+cur+'-DAY STREAK</div><p class="center">'+(milestone?'Incredible consistency — '+cur+' days straight!':'Keystones done. Streak locked in for today.')+'<br><span class="hl">+'+bonus+' XP · +'+bonus+' Gold</span></p>','CLOSE',null,milestone);}
+      shown=true;render();}
+    checkAchievements();
+    checkChallenge();
   }
 }
 function qtap(id){const q=S.quests.find(x=>x.id===id);if(q)toggleQuest(q);}
@@ -377,12 +418,14 @@ function viewHome(){
   let body=heroHTML()+'<div class="panel"><div class="q-head"><div class="panel-title" style="margin:0"><span class="dot"></span>Daily Quest</div><div class="q-progress num">'+doneN+'/'+qs.length+' cleared</div></div><div class="greet">'+greet+'</div>';
   body += qs.length? qs.map(q=>questHTML(q,rec)).join('') : '<div class="empty">No quests scheduled today.</div>';
   body += '<button class="btn ghost sm" style="margin-top:10px" onclick="manageQuests()">✏️ MANAGE QUESTS</button></div>';
+  if(qs.length){const c=challenge(),pct=Math.min(100,Math.round(c.done/c.target*100));
+    body+='<div class="panel chal"><div class="panel-title" style="margin-bottom:8px"><span class="dot" style="background:var(--gold);box-shadow:0 0 6px var(--gold)"></span>🎯 Weekly Challenge</div><div class="barlabel"><span>'+(c.claimed?'Completed! ✓':'Clear '+c.target+' quests this week')+'</span><span class="num">'+c.done+'/'+c.target+'</span></div><div class="bar"><i style="width:'+pct+'%;background:linear-gradient(90deg,#c9a85e,var(--gold))"></i></div><p class="tiny" style="margin-top:7px">'+(c.claimed?'Reward claimed. New challenge next week.':'Reward: <b style="color:var(--gold)">+'+c.reward+' XP & Gold</b>')+'</p></div>';}
   body += '<div class="panel"><div class="panel-title"><span class="dot" style="background:var(--green)"></span>📝 Today I Learned / Reflected</div>'+
     '<textarea id="til_input" rows="2" placeholder="One thing you learned or did well today…" onblur="saveTil(this.value)" style="resize:none">'+esc(rec.til||'')+'</textarea>'+
     '<button class="btn ghost sm" style="margin-top:8px" onclick="saveTilBtn()">SAVE</button></div>';
   return body;
 }
-function saveTil(v){dayRecord().til=(v||'').trim();save();}
+function saveTil(v){dayRecord().til=(v||'').trim();save();checkAchievements(true);}
 function saveTilBtn(){saveTil($('#til_input').value);toast('Saved');}
 
 function viewStats(){
@@ -392,7 +435,8 @@ function viewStats(){
    '<div class="panel"><div class="panel-title"><span class="dot"></span>Consistency Web · 14 days</div><canvas id="radar" style="width:100%;aspect-ratio:1;display:block"></canvas><p class="tiny" style="text-align:center;margin-top:4px">How consistent you\'ve been in each area. 100% = nailed it. Balance the shape.</p></div>'+
    '<div class="panel"><div class="panel-title"><span class="dot"></span>This Week</div><div class="hero-stats"><div class="chip done"><b class="num">'+wk.perfect+'</b><span>Streak Days</span></div><div class="chip"><b class="num">'+wk.cleared+'</b><span>Quests</span></div><div class="chip gold"><b class="num">'+wk.xp+'</b><span>XP</span></div></div><button class="btn ghost sm" style="margin-top:12px" onclick="showRecap()">📋 WEEKLY RECAP</button></div>'+
    '<div class="panel"><div class="panel-title"><span class="dot"></span>Attributes</div>'+bars+'</div>'+
-   '<div class="panel"><div class="panel-title"><span class="dot"></span>Records</div><div class="hero-stats"><div class="chip"><b class="num">'+li.level+'</b><span>Level</span></div><div class="chip"><b class="num">'+S.totalCompleted+'</b><span>Quests</span></div><div class="chip streak"><b class="num">'+st.longest+'</b><span>Best Streak</span></div></div></div>';
+   '<div class="panel"><div class="panel-title"><span class="dot"></span>Records</div><div class="hero-stats"><div class="chip"><b class="num">'+li.level+'</b><span>Level</span></div><div class="chip"><b class="num">'+S.totalCompleted+'</b><span>Quests</span></div><div class="chip streak"><b class="num">'+st.longest+'</b><span>Best Streak</span></div></div></div>'+
+   '<div class="panel"><div class="panel-title"><span class="dot"></span>Achievements · '+S.achievements.length+'/'+ACHV.length+'</div><div class="badges">'+ACHV.map(a=>{const on=S.achievements.includes(a.id);return '<div class="badge '+(on?'on':'')+'" onclick="toast(\''+esc(a.name)+': '+esc(a.desc)+'\')"><div class="bi">'+a.ic+'</div><div class="bn">'+esc(a.name)+'</div></div>';}).join('')+'</div><p class="tiny" style="margin-top:10px;text-align:center">Tap a badge to see how to earn it.</p></div>';
 }
 const PAL=['#94a6ff','#c1a8ff','#7fe6b4','#ecc77e','#ff8fa0','#74dcd0','#ffb27a','#ff9bd0'];
 function drawRadar(){const c=$('#radar');if(!c||!c.clientWidth)return;const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientWidth;c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);
@@ -448,7 +492,7 @@ function viewShop(){
    '<div class="panel"><div class="panel-title"><span class="dot"></span>Reward Shop</div>'+cards+'<button class="btn ghost sm" style="margin-top:6px" onclick="addReward()">+ ADD REWARD</button></div>'+
    '<div class="panel"><div class="panel-title"><span class="dot"></span>Recently Claimed</div>'+recent+'</div>';
 }
-function redeem(id){const r=S.rewards.find(x=>x.id===id);if(!r||S.gold<r.cost)return;S.gold-=r.cost;S.redeemed.push({name:r.name,cost:r.cost,date:todayStr()});save();if(navigator.vibrate)navigator.vibrate([20,40,20]);sysModal('REWARD UNLOCKED','<div class="sys-big">'+(r.ic||'🎁')+'</div><p class="center">You claimed <b>'+esc(r.name)+'</b> for <span class="hl">'+r.cost+' gold</span>.<br>Enjoy it — you earned it.</p>','NICE');render();}
+function redeem(id){const r=S.rewards.find(x=>x.id===id);if(!r||S.gold<r.cost)return;S.gold-=r.cost;S.redeemed.push({name:r.name,cost:r.cost,date:todayStr()});save();if(navigator.vibrate)navigator.vibrate([20,40,20]);sysModal('REWARD UNLOCKED','<div class="sys-big">'+(r.ic||'🎁')+'</div><p class="center">You claimed <b>'+esc(r.name)+'</b> for <span class="hl">'+r.cost+' gold</span>.<br>Enjoy it — you earned it.</p>','NICE');checkAchievements(true);render();}
 function delReward(id){if(confirm('Remove this reward?')){S.rewards=S.rewards.filter(x=>x.id!==id);save();render();}}
 function addReward(){const name=prompt('Reward name?');if(!name)return;const cost=parseInt(prompt('Cost in gold?','300'))||300;const ic=prompt('An emoji? (optional)','🎁')||'🎁';S.rewards.push({id:'r'+Date.now(),ic,name:name.trim(),cost});save();render();}
 
@@ -467,7 +511,7 @@ function viewLog(){
    weightPanel+
    '<div class="panel"><div class="panel-title"><span class="dot" style="background:var(--green)"></span>📝 Learning Log</div>'+tils+'</div>';
 }
-function logWeight(){const v=parseFloat($('#wkg').value);if(!v)return;const d=todayStr();const ex=S.weights.find(w=>w.date===d);if(ex)ex.kg=v;else S.weights.push({date:d,kg:v});S.weights.sort((a,b)=>a.date<b.date?-1:1);save();toast('Weight logged');render();}
+function logWeight(){const v=parseFloat($('#wkg').value);if(!v)return;const d=todayStr();const ex=S.weights.find(w=>w.date===d);if(ex)ex.kg=v;else S.weights.push({date:d,kg:v});S.weights.sort((a,b)=>a.date<b.date?-1:1);save();toast('Weight logged');checkAchievements(true);render();}
 function drawWeightChart(){const c=$('#wchart');if(!c||!c.clientWidth)return;const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=120;c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);const data=S.weights.slice(-30);if(!data.length){x.fillStyle='#868da4';x.font='12px Sora';x.fillText('Log your weight to see the trend.',10,60);return;}const goal=S.profile.goalWeight;const ys=data.map(d=>d.kg).concat(goal?[goal]:[]);let mn=Math.min(...ys)-1,mx=Math.max(...ys)+1;if(mx-mn<2){mx+=1;mn-=1;}const px=i=>data.length<2?w/2:10+i*(w-20)/(data.length-1),py=v=>10+(mx-v)/(mx-mn)*(h-20);if(goal){x.strokeStyle='rgba(236,199,126,.5)';x.setLineDash([5,4]);x.beginPath();x.moveTo(0,py(goal));x.lineTo(w,py(goal));x.stroke();x.setLineDash([]);}x.strokeStyle=getCss('--accent');x.lineWidth=2;x.beginPath();data.forEach((d,i)=>{i?x.lineTo(px(i),py(d.kg)):x.moveTo(px(i),py(d.kg));});x.stroke();x.fillStyle=getCss('--accent');data.forEach((d,i)=>{x.beginPath();x.arc(px(i),py(d.kg),3,0,7);x.fill();});}
 function drawActivity(){const c=$('#activity');if(!c||!c.clientWidth)return;const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=90;c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);const days=[];const d=new Date();d.setDate(d.getDate()-13);for(let i=0;i<14;i++){const dd=new Date(d);dd.setDate(d.getDate()+i);const ds=dstr(dd);days.push({xp:dayXp(S.history[ds]),full:dayCounts(ds)});}const max=Math.max(60,...days.map(o=>o.xp)),gap=4,bw=(w-13*gap)/14;days.forEach((o,i)=>{const bh=Math.max(2,o.xp/max*(h-12)),pxx=i*(bw+gap);x.fillStyle=o.full?getCss('--accent'):'rgba(148,166,255,0.35)';rr(x,pxx,h-bh,bw,bh,3);x.fill();});}
 function rr(x,a,b,w,h,r){r=Math.min(r,w/2,h/2);x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
@@ -574,8 +618,13 @@ function finishOnboarding(){
 }
 
 /* ============================================================ MODALS / MISC */
-function sysModal(head,html,btn,onClose){btn=btn||'OK';$('#modal-host').innerHTML='<div class="overlay"><div class="sys"><div class="sys-h">SYSTEM · '+head+'</div>'+html+'<button class="btn" style="margin-top:16px" id="ovbtn">'+btn+'</button></div></div>';$('#ovbtn').onclick=()=>{$('#modal-host').innerHTML='';if(onClose)onClose();};}
-function levelUpMsg(l){sysModal('NOTIFICATION','<div class="center" style="color:var(--gold);letter-spacing:4px;font-family:Space Grotesk;font-size:11px;font-weight:600">⟨ LEVEL UP ⟩</div><div class="sys-big">LEVEL '+l+'</div><p class="center">Rank <b style="color:var(--accent)">'+rankFor(l)+'</b> · '+titleFor(l)+'<br>You\'ve grown stronger.</p>','CONTINUE');if(navigator.vibrate)navigator.vibrate([30,60,30,60,80]);}
+function sysModal(head,html,btn,onClose,celebrate){btn=btn||'OK';$('#modal-host').innerHTML='<div class="overlay"><div class="sys'+(celebrate?' celebrate':'')+'"><div class="sys-h">SYSTEM · '+head+'</div>'+html+'<button class="btn" style="margin-top:16px" id="ovbtn">'+btn+'</button></div></div>';$('#ovbtn').onclick=()=>{$('#modal-host').innerHTML='';if(onClose)onClose();};}
+function levelUpMsg(l){sysModal('NOTIFICATION','<div class="center" style="color:var(--gold);letter-spacing:4px;font-family:Space Grotesk;font-size:11px;font-weight:600">⟨ LEVEL UP ⟩</div><div class="sys-big">LEVEL '+l+'</div><p class="center">'+titleFor(l)+'<br>You\'ve grown stronger.</p>','CONTINUE',null,true);if(navigator.vibrate)navigator.vibrate([30,60,30,60,80]);}
+function rankUpMsg(rk){sysModal('RANK UP','<div class="center" style="color:var(--gold);letter-spacing:4px;font-family:Space Grotesk;font-size:11px;font-weight:600">⟨ RANK UP ⟩</div><div class="sys-big" style="font-size:46px">'+rk+'</div><p class="center">You\'ve ascended to <b style="color:var(--accent)">Rank '+rk+'</b>. The System recognises your growth.</p>','CONTINUE',null,true);if(navigator.vibrate)navigator.vibrate([40,60,40,60,120]);}
+/* ---------- weekly challenge ---------- */
+function weekKey(){const d=new Date();const oneJan=new Date(d.getFullYear(),0,1);const wk=Math.ceil(((d-oneJan)/86400000+oneJan.getDay()+1)/7);return d.getFullYear()+'-W'+wk;}
+function challenge(){const due=ALL.reduce((n,dy)=>n+S.quests.filter(q=>q.days.includes(dy)).length,0);const target=Math.max(12,Math.round(due*0.6));const done=weekStats().cleared;return{target,done,reward:120,claimed:!!S.challengeClaimed[weekKey()]};}
+function checkChallenge(){const c=challenge();if(c.done>=c.target&&!c.claimed){S.challengeClaimed[weekKey()]=true;S.gold+=c.reward;S.totalXp+=c.reward;save();sysModal('WEEKLY CHALLENGE COMPLETE','<div class="sys-big" style="font-size:34px">🎯</div><p class="center">You cleared <b>'+c.done+'</b> quests this week!<br><span class="hl">+'+c.reward+' XP · +'+c.reward+' Gold</span></p>','AWESOME',null,true);render();}}
 function toast(msg){const h=$('#notif-host');const el=document.createElement('div');el.className='notif';el.textContent='◆ '+msg;h.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .4s';},1200);setTimeout(()=>el.remove(),1650);}
 function recapHTML(){const wk=weekStats(),sc=attrScores(),st=streakInfo();const ent=Object.entries(sc),best=ent.reduce((a,b)=>b[1]>a[1]?b:a),worst=ent.reduce((a,b)=>b[1]<a[1]?b:a);let wch='—';const ws=S.weights.slice(-8);if(ws.length>=2){const dd=+(ws[ws.length-1].kg-ws[0].kg).toFixed(1);wch=(dd>0?'+':'')+dd+' '+S.profile.units;}return '<div class="sys-big" style="font-size:20px">WEEK IN REVIEW</div><div class="hero-stats" style="margin-bottom:8px"><div class="chip done"><b class="num">'+wk.perfect+'</b><span>Streak Days</span></div><div class="chip"><b class="num">'+wk.cleared+'</b><span>Quests</span></div><div class="chip gold"><b class="num">'+wk.xp+'</b><span>XP</span></div></div><p>🔥 Streak: <b>'+st.cur+'</b> days'+(S.profile.weightOn?' · ⚖️ '+wch:'')+'</p><p>💪 Strongest: <b style="color:var(--green)">'+STATS[best[0]].name+' ('+best[1]+'%)</b><br>🎯 Focus next: <b style="color:var(--red)">'+STATS[worst[0]].name+' ('+worst[1]+'%)</b></p><p class="center tiny">Pick next week\'s focus and keep going, '+esc(S.profile.name)+'.</p>';}
 function showRecap(){sysModal('WEEKLY RECAP',recapHTML(),"LET'S GO");}
@@ -587,6 +636,7 @@ function openSettings(){const p=S.profile;const themeSel=Object.keys(THEMES).map
    '<label>Theme</label><div style="display:flex;gap:10px;margin-top:6px">'+themeSel+'</div>'+
    '<button class="btn" style="margin-top:16px" onclick="saveSettings()">SAVE</button>'+
    '<button class="btn ghost sm" style="margin-top:8px" onclick="manageQuests()">✏️ MANAGE QUESTS</button>'+
+   '<a href="guide.html" target="_blank" rel="noopener" class="btn ghost sm" style="margin-top:8px;display:block;text-decoration:none">📖 FULL GUIDE</a>'+
    '<button class="btn ghost sm" style="margin-top:8px" onclick="forceUpdate()">⟳ CHECK FOR UPDATES</button>'+
    '<button class="btn ghost sm" style="margin-top:8px" onclick="exportData()">EXPORT BACKUP</button>'+
    '<button class="btn ghost sm" style="margin-top:8px" onclick="importData()">IMPORT BACKUP</button>'+
@@ -602,6 +652,7 @@ function forceUpdate(){toast('Checking…');if('serviceWorker' in navigator)navi
 /* ============================================================ BOOT */
 document.querySelectorAll('#nav button').forEach(b=>{b.onclick=()=>{TAB=b.dataset.t;render();window.scrollTo(0,0);};});
 if(S.lastOpen!==todayStr()){S.lastOpen=todayStr();save();}
+if(S.onboarded)checkAchievements(true);
 applyTheme();render();
 if(S.onboarded&&dow()===0&&S.lastRecap!==todayStr()&&Object.keys(S.history).length>0){S.lastRecap=todayStr();save();showRecap();}
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').then(reg=>{reg.update();setInterval(()=>reg.update(),60000);}).catch(()=>{});});let refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(refreshing)return;refreshing=true;location.reload();});}
