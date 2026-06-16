@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
 <meta name="theme-color" content="#08090e" />
+<meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="The System" />
@@ -183,7 +184,7 @@ label{font-size:10.5px;color:var(--muted);letter-spacing:1px;display:block;margi
    ============================================================ */
 const $=(s,el=document)=>el.querySelector(s);
 const STORE='thesystem_v1';
-const APP_VERSION='1.2';
+const APP_VERSION='1.3';
 const ALL=[0,1,2,3,4,5,6];
 const DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function parseD(s){const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c);}
@@ -207,11 +208,11 @@ const STATS={
   WLT:{name:'Wealth',   cls:'wlt', desc:'Money discipline — spend less, save more.'},
 };
 const THEMES={
-  indigo:{a:'#94a6ff',b:'#c1a8ff',d:'#5d6ed6'},
-  emerald:{a:'#5fe0a8',b:'#8fe6c4',d:'#34a87a'},
-  amber:{a:'#f0b65e',b:'#f5d08a',d:'#c08a34'},
-  rose:{a:'#ff8fa0',b:'#ffb0bd',d:'#c85d72'},
-  cyan:{a:'#5fcde0',b:'#8fe0ec',d:'#3496a8'},
+  indigo:{a:'#9db1ff',b:'#cbb2ff',d:'#6b7cf0'},
+  emerald:{a:'#6cf0b6',b:'#9bf0d2',d:'#38b083'},
+  amber:{a:'#ffc46b',b:'#ffd99a',d:'#cc9440'},
+  rose:{a:'#ff97a8',b:'#ffb8c4',d:'#d06579'},
+  cyan:{a:'#6fd9ec',b:'#9be8f4',d:'#3aa2b4'},
 };
 function applyTheme(){const t=THEMES[S.theme]||THEMES.indigo;const r=document.documentElement.style;r.setProperty('--accent',t.a);r.setProperty('--accent2',t.b);r.setProperty('--accent-d',t.d);}
 
@@ -289,7 +290,28 @@ function defaultState(){return{
   redeemed:[], premium:false, lastOpen:todayStr(), lastRecap:null,
   achievements:[], challengeClaimed:{},
 };}
-function load(){try{const r=JSON.parse(localStorage.getItem(STORE));const s=r&&r.profile?r:defaultState();if(!s.achievements)s.achievements=[];if(!s.challengeClaimed)s.challengeClaimed={};return s;}catch(e){return defaultState();}}
+function normalize(s){
+  const d=defaultState();
+  if(!s||typeof s!=='object'||!s.profile)return d;
+  s.profile=Object.assign({},d.profile,s.profile);
+  s.stats=Object.assign({},d.stats,s.stats||{});
+  s.finance=Object.assign({},d.finance,s.finance||{});
+  if(!Array.isArray(s.finance.budgets))s.finance.budgets=[];
+  if(!s.finance.spends||typeof s.finance.spends!=='object')s.finance.spends={};
+  if(!Array.isArray(s.quests))s.quests=[];
+  s.quests=s.quests.filter(q=>q&&q.id&&q.title&&Array.isArray(q.days)).map(q=>({id:String(q.id),title:String(q.title),stat:STATS[q.stat]?q.stat:'PER',xp:+q.xp||20,gold:+q.gold||15,days:q.days.filter(n=>n>=0&&n<=6),key:!!q.key,note:q.note?String(q.note):''}));
+  if(!s.history||typeof s.history!=='object')s.history={};
+  if(!Array.isArray(s.weights))s.weights=[];
+  if(!Array.isArray(s.rewards))s.rewards=d.rewards;
+  if(!Array.isArray(s.redeemed))s.redeemed=[];
+  if(!Array.isArray(s.achievements))s.achievements=[];
+  if(!s.challengeClaimed||typeof s.challengeClaimed!=='object')s.challengeClaimed={};
+  ['totalXp','gold','totalCompleted'].forEach(k=>{if(typeof s[k]!=='number'||isNaN(s[k]))s[k]=0;});
+  if(!s.theme||!THEMES[s.theme])s.theme='indigo';
+  s.onboarded=!!s.onboarded;
+  return s;
+}
+function load(){try{const r=JSON.parse(localStorage.getItem(STORE));return r&&r.profile?normalize(r):defaultState();}catch(e){return defaultState();}}
 function save(){localStorage.setItem(STORE,JSON.stringify(S));}
 
 /* ---------- achievements ---------- */
@@ -341,7 +363,7 @@ function toggleQuest(q){
       const milestone=[7,14,30,50,100,200].includes(cur);
       if(!shown||milestone){sysModal(milestone?'STREAK MILESTONE':'STREAK SECURED','<div class="sys-big">🔥 '+cur+'-DAY STREAK</div><p class="center">'+(milestone?'Incredible consistency — '+cur+' days straight!':'Keystones done. Streak locked in for today.')+'<br><span class="hl">+'+bonus+' XP · +'+bonus+' Gold</span></p>','CLOSE',null,milestone);}
       shown=true;render();}
-    checkAchievements();
+    checkAchievements(shown);
     checkChallenge();
   }
 }
@@ -545,7 +567,7 @@ function freqLabel(days){if(days.length===7)return'Daily';if(days.length===5&&!d
 function toggleKey(id){const q=S.quests.find(x=>x.id===id);if(!q)return;q.key=!q.key;save();manageQuests();}
 function delQuest(id){if(confirm('Delete this quest?')){S.quests=S.quests.filter(x=>x.id!==id);save();manageQuests();}}
 let QE={};
-function editQuest(id){const q=id?S.quests.find(x=>x.id===id):null;QE=q?{...q,days:[...q.days]}:{id:null,title:'',stat:'STR',xp:35,gold:30,days:[...ALL],key:false,diff:'med'};if(!QE.diff)QE.diff=QE.xp>=50?'hard':QE.xp<=20?'easy':'med';renderQE();}
+function editQuest(id){const q=id?S.quests.find(x=>x.id===id):null;QE=q?{...q,days:[...q.days]}:{id:null,title:'',stat:'STR',xp:35,gold:30,days:[...ALL],key:false,note:'',diff:'med'};if(!QE.diff)QE.diff=QE.xp>=50?'hard':QE.xp<=20?'easy':'med';renderQE();}
 function renderQE(){
   const stats=Object.keys(STATS).map(k=>'<button class="'+(QE.stat===k?'sel':'')+'" onclick="qeStat(\''+k+'\')">'+k+'</button>').join('');
   const diffs=[['easy','Easy'],['med','Medium'],['hard','Hard']].map(d=>'<button class="'+(QE.diff===d[0]?'sel':'')+'" onclick="qeDiff(\''+d[0]+'\')">'+d[1]+'</button>').join('');
@@ -556,17 +578,18 @@ function renderQE(){
     '<label>Attribute it trains</label><div class="chipsel">'+stats+'</div>'+
     '<label>Difficulty (sets XP & gold)</label><div class="chipsel">'+diffs+'</div>'+
     '<label>Repeats</label><div class="chipsel">'+freqs+'</div>'+customDays+
-    '<label style="margin-top:14px"><input type="checkbox" id="qe_k" '+(QE.key?'checked':'')+' style="width:auto;margin-right:8px">⭐ Keystone (protects streak)</label>'+
+    '<label style="margin-top:14px">Note / details (optional)</label><input id="qe_note" value="'+esc(QE.note||'')+'" placeholder="e.g. after lunch · 20 min">'+
+    '<label style="margin-top:12px"><input type="checkbox" id="qe_k" '+(QE.key?'checked':'')+' style="width:auto;margin-right:8px">⭐ Keystone (protects streak)</label>'+
     '<button class="btn" style="margin-top:14px" onclick="saveQuest()">SAVE QUEST</button>','CANCEL',()=>manageQuests());
 }
-function qeStat(k){QE.title=qeReadTitle();QE.stat=k;renderQE();}
-function qeDiff(d){QE.title=qeReadTitle();QE.diff=d;const map={easy:[15,10],med:[35,30],hard:[55,50]};QE.xp=map[d][0];QE.gold=map[d][1];renderQE();}
-function qeFreq(f){if(f===undefined){if(QE.days.length===7)return'daily';if(QE.days.length===5&&!QE.days.includes(0)&&!QE.days.includes(6))return'weekdays';return'custom';}QE.title=qeReadTitle();if(f==='daily')QE.days=[...ALL];else if(f==='weekdays')QE.days=[1,2,3,4,5];else if(QE.days.length===7||QE.days.length===5)QE.days=[1,3,5];renderQE();}
-function qeDay(i){QE.title=qeReadTitle();const j=QE.days.indexOf(i);if(j>=0)QE.days.splice(j,1);else QE.days.push(i);QE.days.sort();renderQE();}
-function qeReadTitle(){const e=$('#qe_t');return e?e.value:QE.title;}
-function saveQuest(){const t=$('#qe_t').value.trim();if(!t){toast('Add a title');return;}QE.title=t;QE.key=$('#qe_k').checked;if(!QE.days.length)QE.days=[...ALL];
-  if(QE.id){const q=S.quests.find(x=>x.id===QE.id);Object.assign(q,{title:QE.title,stat:QE.stat,xp:QE.xp,gold:QE.gold,days:QE.days,key:QE.key});}
-  else{S.quests.push({id:uid(),title:QE.title,stat:QE.stat,xp:QE.xp,gold:QE.gold,days:QE.days,key:QE.key});}
+function qeSync(){const t=$('#qe_t');if(t&&t.value!==undefined)QE.title=t.value;const k=$('#qe_k');if(k)QE.key=k.checked;const n=$('#qe_note');if(n&&n.value!==undefined)QE.note=n.value;}
+function qeStat(k){qeSync();QE.stat=k;renderQE();}
+function qeDiff(d){qeSync();QE.diff=d;const map={easy:[15,10],med:[35,30],hard:[55,50]};QE.xp=map[d][0];QE.gold=map[d][1];renderQE();}
+function qeFreq(f){if(f===undefined){if(QE.days.length===7)return'daily';if(QE.days.length===5&&!QE.days.includes(0)&&!QE.days.includes(6))return'weekdays';return'custom';}qeSync();if(f==='daily')QE.days=[...ALL];else if(f==='weekdays')QE.days=[1,2,3,4,5];else if(QE.days.length===7||QE.days.length===5)QE.days=[1,3,5];renderQE();}
+function qeDay(i){qeSync();const j=QE.days.indexOf(i);if(j>=0)QE.days.splice(j,1);else QE.days.push(i);QE.days.sort();renderQE();}
+function saveQuest(){qeSync();const t=(QE.title||'').trim();if(!t){toast('Add a title');return;}if(!QE.days.length)QE.days=[...ALL];const note=(QE.note||'').trim();
+  if(QE.id){const q=S.quests.find(x=>x.id===QE.id);if(q)Object.assign(q,{title:t,stat:QE.stat,xp:QE.xp,gold:QE.gold,days:QE.days,key:QE.key,note});}
+  else{S.quests.push({id:uid(),title:t,stat:QE.stat,xp:QE.xp,gold:QE.gold,days:QE.days,key:QE.key,note});}
   save();manageQuests();}
 function presetPicker(){let html='';Object.keys(PRESETS).forEach(area=>{html+='<h4 style="font-family:Space Grotesk;font-size:12px;color:var(--accent);margin:14px 0 6px">'+area+'</h4>';PRESETS[area].forEach((p,i)=>{const added=S.quests.some(q=>q.title===p.title);html+='<div class="preset"><div class="qi" style="flex:1"><div class="t" style="font-size:14px">'+esc(p.title)+'</div><div class="m" style="font-size:10.5px;color:var(--muted)">'+p.stat+' · '+freqLabel(p.days)+(p.key?' · ⭐':'')+'</div></div><button class="btn ghost sm" style="width:auto;padding:8px 12px" '+(added?'disabled':'')+' onclick="addPreset(\''+area+'\','+i+')">'+(added?'Added':'+ Add')+'</button></div>';});});
   sysModal('QUEST LIBRARY',html,'DONE',()=>manageQuests());}
@@ -636,7 +659,6 @@ function openSettings(){const p=S.profile;const themeSel=Object.keys(THEMES).map
    '<label>Theme</label><div style="display:flex;gap:10px;margin-top:6px">'+themeSel+'</div>'+
    '<button class="btn" style="margin-top:16px" onclick="saveSettings()">SAVE</button>'+
    '<button class="btn ghost sm" style="margin-top:8px" onclick="manageQuests()">✏️ MANAGE QUESTS</button>'+
-   '<a href="guide.html" target="_blank" rel="noopener" class="btn ghost sm" style="margin-top:8px;display:block;text-decoration:none">📖 FULL GUIDE</a>'+
    '<button class="btn ghost sm" style="margin-top:8px" onclick="forceUpdate()">⟳ CHECK FOR UPDATES</button>'+
    '<button class="btn ghost sm" style="margin-top:8px" onclick="exportData()">EXPORT BACKUP</button>'+
    '<button class="btn ghost sm" style="margin-top:8px" onclick="importData()">IMPORT BACKUP</button>'+
@@ -645,7 +667,7 @@ function openSettings(){const p=S.profile;const themeSel=Object.keys(THEMES).map
 function setTheme(t){S.theme=t;save();applyTheme();openSettings();}
 function saveSettings(){S.profile.name=$('#s_name').value.trim()||'Hunter';S.profile.units=$('#s_units').value;S.profile.goalWeight=parseFloat($('#s_goal').value)||null;S.profile.weightOn=$('#s_won').checked;S.finance.enabled=$('#s_mon').checked;save();$('#modal-host').innerHTML='';render();toast('Saved');}
 function exportData(){const b=new Blob([JSON.stringify(S)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='thesystem-backup-'+todayStr()+'.json';a.click();}
-function importData(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);save();$('#modal-host').innerHTML='';render();toast('Restored');}catch(x){alert('Invalid file');}};r.readAsText(f);};i.click();}
+function importData(){const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const parsed=JSON.parse(r.result);if(!parsed||!parsed.profile){alert('That doesn\'t look like a System backup.');return;}S=normalize(parsed);save();$('#modal-host').innerHTML='';render();toast('Backup restored');}catch(x){alert('Invalid or corrupted file.');}};r.readAsText(f);};i.click();}
 function hardReset(){if(confirm('Erase ALL data? This cannot be undone.')){localStorage.removeItem(STORE);S=defaultState();save();$('#modal-host').innerHTML='';render();}}
 function forceUpdate(){toast('Checking…');if('serviceWorker' in navigator)navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.update()));setTimeout(()=>location.reload(),700);}
 
