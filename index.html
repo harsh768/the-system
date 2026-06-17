@@ -100,6 +100,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .tag.xp{color:var(--accent);border-color:var(--line2);}
 .tag.gold{color:var(--gold);border-color:rgba(236,199,126,.3);}
 .tag.streak{color:var(--orange);border-color:rgba(255,178,122,.4);background:rgba(255,178,122,.08);}
+.tag.run{color:#0a0b10;background:linear-gradient(150deg,var(--orange),var(--gold));border-color:transparent;font-weight:700;letter-spacing:.3px;}
+.tag.key{color:var(--gold);border-color:rgba(236,199,126,.4);background:rgba(236,199,126,.07);}
+.wstat{display:flex;gap:8px;margin:4px 0 13px;} .wstat .wc{flex:1;text-align:center;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:12px;padding:9px 4px;} .wstat .wc b{display:block;font-family:'Space Grotesk';font-size:16px;} .wstat .wc span{font-size:8.5px;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;}
+.wstat .wc.now{border-color:var(--line2);background:linear-gradient(160deg,rgba(111,176,255,.12),rgba(0,0,0,.2));}
+.wgoal{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:0 0 5px;letter-spacing:.3px;}
+.up{color:var(--red);} .down{color:var(--green);} .flat{color:var(--muted);}
 .statrow{margin-bottom:15px;}
 .statrow .barlabel b{color:var(--txt);font-family:'Space Grotesk';font-size:12px;font-weight:600;}
 .statrow .barlabel .v{color:var(--accent);font-family:'Space Grotesk';}
@@ -206,7 +212,7 @@ label{font-size:10.5px;color:var(--muted);letter-spacing:1px;display:block;margi
    ============================================================ */
 const $=(s,el=document)=>el.querySelector(s);
 const STORE='thesystem_v1';
-const APP_VERSION='1.6';
+const APP_VERSION='1.7';
 const ALL=[0,1,2,3,4,5,6];
 const DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function parseD(s){const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c);}
@@ -408,6 +414,23 @@ function streakInfo(){
     if(prev&&daysBetween(prev,ds)===1&&dayCounts(prev))run++;else run=1;longest=Math.max(longest,run);prev=ds;}
   return{cur,longest:Math.max(longest,cur)};
 }
+/* current consecutive completions of ONE quest, counted only on its scheduled days.
+   today not-yet-done is a grace (doesn't break); any earlier missed scheduled day breaks. */
+function questStreak(q){
+  if(!q.days||!q.days.length)return 0;
+  let streak=0,seen=false;const d=new Date(),today=todayStr();
+  for(let i=0;i<420;i++){
+    if(q.days.includes(d.getDay())){
+      const ds=dstr(d),rec=S.history[ds],done=rec&&rec.done.includes(q.id);
+      if(done){streak++;}
+      else if(!seen&&ds===today){/* today still open — grace */}
+      else break;
+      seen=true;
+    }
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
 
 /* ---------- history helpers ---------- */
 function dayXp(rec){if(!rec)return 0;return rec.meta?Object.values(rec.meta).reduce((a,b)=>a+(b.xp||0),0):0;}
@@ -444,11 +467,12 @@ function heroHTML(){
     '<div class="chip done"><b class="num">'+S.totalCompleted+'</b><span>Cleared</span></div></div></div>';
 }
 function questHTML(q,rec){
-  const done=rec.done.includes(q.id);
+  const done=rec.done.includes(q.id),run=questStreak(q);
+  const runTag=run>=1?'<span class="tag run" title="'+run+'-day streak on this quest">🔥 '+run+'</span>':'';
   return '<div class="quest '+(done?'done':'')+'"><button class="qcheck" onclick="qtap(\''+q.id+'\')">✓</button>'+
    '<div class="qbody" onclick="qexp(\''+q.id+'\')"><div class="qtitle">'+esc(q.title)+'</div>'+
    (q.note?'<div class="qsub">'+esc(q.note)+'</div>':'')+
-   '<div class="qtags"><span class="tag">'+q.stat+'</span><span class="tag xp">+'+q.xp+' XP</span><span class="tag gold">+'+q.gold+' G</span>'+(q.key?'<span class="tag streak">🔥 STREAK</span>':'')+'</div>'+
+   '<div class="qtags">'+runTag+'<span class="tag">'+q.stat+'</span><span class="tag xp">+'+q.xp+' XP</span><span class="tag gold">+'+q.gold+' G</span>'+(q.key?'<span class="tag key">⭐ KEYSTONE</span>':'')+'</div>'+
    (q.note?'<div class="qexp hidden tiny" id="exp_'+q.id+'" style="margin-top:8px">'+esc(q.note)+'</div><div class="expbtn tiny" id="eb_'+q.id+'" style="color:var(--accent);margin-top:5px">▾ details</div>':'')+
    '</div></div>';
 }
@@ -499,7 +523,11 @@ function getCss(v){return getComputedStyle(document.documentElement).getProperty
 function viewMoney(){
   if(!S.finance.enabled) return '<div class="panel money-hero"><div class="sys-big" style="font-size:20px">💰 Money Tracker</div><p class="tiny">Track income, set a savings goal, log spending and see where your money goes. Optional — turn it on if you want it.</p><button class="btn" style="margin-top:14px" onclick="enableMoney()">ENABLE MONEY TRACKER</button></div>';
   const mk=monthKey(),f=fin(mk),rate=f.income>0?Math.round(f.projected/f.income*100):0;
-  const cats=S.finance.budgets.map(b=>{const sp=f.byCat[b.cat]||0,pct=b.amt?Math.min(100,Math.round(sp/b.amt*100)):0,over=sp>b.amt;return '<div class="catrow"><div class="cl"><span>'+esc(b.cat)+'</span><span class="cv num">'+money(sp)+' / '+money(b.amt)+'</span></div><div class="bar '+(over?'over':'')+'"><i style="width:'+pct+'%"></i></div></div>';}).join('')||'<div class="empty">No budget categories yet — tap Edit.</div>';
+  const cats=S.finance.budgets.map(b=>{const sp=f.byCat[b.cat]||0;
+    if(!b.amt){return '<div class="catrow"><div class="cl"><span>'+esc(b.cat)+'</span><span class="cv num">'+money(sp)+' <span class="tiny">· no budget</span></span></div><div class="bar"><i style="width:'+(f.spentTotal>0?Math.min(100,Math.round(sp/f.spentTotal*100)):0)+'%;opacity:.45"></i></div></div>';}
+    const pct=Math.min(100,Math.round(sp/b.amt*100)),over=sp>b.amt,diff=Math.abs(b.amt-sp);
+    return '<div class="catrow"><div class="cl"><span>'+esc(b.cat)+'</span><span class="cv num">'+money(sp)+' / '+money(b.amt)+'</span></div><div class="bar '+(over?'over':'')+'"><i style="width:'+pct+'%"></i></div><div class="tiny" style="margin-top:3px;color:'+(over?'var(--red)':'var(--muted)')+'">'+(over?money(diff)+' over budget':money(diff)+' left')+'</div></div>';}).join('')||'<div class="empty">No categories yet — log a spend or tap Edit to add one.</div>';
+  const totalBudget=S.finance.budgets.reduce((a,b)=>a+(b.amt||0),0);
   const recent=(f.spends.slice(-6).reverse().map(s=>'<div class="spend-item"><span>'+esc(s.cat)+(s.note?' · '+esc(s.note):'')+' <span class="tiny">'+s.date.slice(5)+'</span></span><span class="sa">-'+money(s.amt)+'</span></div>').join(''))||'<div class="empty">No spends logged this month.</div>';
   const spentEntries=Object.entries(f.byCat).filter(e=>e[1]>0);
   const legend=spentEntries.map((e,i)=>'<div class="leg"><span class="sw" style="background:'+PAL[i%PAL.length]+'"></span><span class="lk">'+esc(e[0])+'</span><span class="lv num">'+money(e[1])+'</span></div>').join('');
@@ -508,7 +536,7 @@ function viewMoney(){
   return '<div class="panel money-hero"><div class="tiny">PROJECTED SAVINGS · '+mk+'</div><div class="big-num" style="color:var(--gold)">'+money(f.projected)+'</div><div class="tiny">'+(f.income>0?'savings rate ≈ '+rate+'% of '+money(f.income):'set your income in Edit')+'</div>'+
    '<div class="mgrid"><div class="mcard"><b class="num" style="color:var(--green)">'+money(f.savingsGoal)+'</b><span>Savings Goal</span></div><div class="mcard"><b class="num">'+money(f.spendable)+'</b><span>Spendable</span></div><div class="mcard"><b class="num" style="color:'+(f.spendable-f.spentTotal>=0?'var(--accent)':'var(--red)')+'">'+money(Math.max(0,f.spendable-f.spentTotal))+'</b><span>Left</span></div></div>'+
    '<button class="btn" style="margin-top:14px" onclick="logSpend()">+ LOG A SPEND</button></div>'+
-   '<div class="panel"><div class="panel-title"><span class="dot"></span>Budget · '+mk+'</div>'+cats+'<p class="tiny">Spent '+money(f.spentTotal)+' of '+money(f.spendable)+' this month.</p></div>'+
+   '<div class="panel"><div class="panel-title"><span class="dot"></span>Budget · '+mk+'</div>'+cats+'<p class="tiny">Spent <b style="color:var(--txt2)">'+money(f.spentTotal)+'</b> of '+money(f.spendable)+' spendable'+(totalBudget>0?' · category budgets total '+money(totalBudget):'')+'.</p></div>'+
    donut+
    '<div class="panel"><div class="panel-title"><span class="dot"></span>Recent Spends</div>'+recent+'</div>'+
    '<div class="panel"><div class="panel-title"><span class="dot"></span>Savings History</div>'+(hist||'<div class="empty">—</div>')+'</div>'+
@@ -522,7 +550,7 @@ function logSpend(){if(!S.finance.budgets.length){editMoney();return;}if(!SPEND_
   const cats=S.finance.budgets.map(b=>'<button onclick="selCat(this.dataset.c)" data-c="'+esc(b.cat)+'" class="'+(b.cat===SPEND_CAT?'sel':'')+'">'+esc(b.cat)+'</button>').join('')+'<button onclick="addCatInline()" style="border-style:dashed;color:var(--accent)">+ New</button>';
   sysModal('LOG A SPEND','<label>Amount</label><input id="sp_amt" type="number" inputmode="numeric" placeholder="0"><label>Category</label><div class="chipsel" id="sp_cats">'+cats+'</div><label>Note (optional)</label><input id="sp_note" placeholder="what was it?"><button class="btn" style="margin-top:16px" onclick="saveSpend()">ADD</button>','CANCEL');}
 function selCat(c){SPEND_CAT=c;[...document.querySelectorAll('#sp_cats button')].forEach(b=>b.classList.toggle('sel',b.dataset.c===c));}
-function addCatInline(){const n=prompt('New category name?');if(!n)return;const t=n.trim();if(t&&!S.finance.budgets.find(b=>b.cat===t))S.finance.budgets.push({cat:t,amt:0});save();SPEND_CAT=t;logSpend();}
+function addCatInline(){const n=prompt('New category name?');if(!n)return;const t=n.trim().slice(0,40);if(!t){toast('Enter a name');return;}if(!S.finance.budgets.find(b=>b.cat===t))S.finance.budgets.push({cat:t,amt:0});save();SPEND_CAT=t;logSpend();}
 function saveSpend(){const amt=parseFloat($('#sp_amt').value);if(!amt||amt<=0){toast('Enter an amount');return;}const mk=monthKey();if(!S.finance.spends[mk])S.finance.spends[mk]=[];S.finance.spends[mk].push({date:todayStr(),cat:SPEND_CAT,amt,note:$('#sp_note').value.trim()});save();$('#modal-host').innerHTML='';toast('Logged');render();}
 function editMoney(){const f=S.finance;const bg=f.budgets.map((b,i)=>'<div class="row2" style="align-items:center;margin-top:6px;gap:8px"><input value="'+esc(b.cat)+'" id="bc_'+i+'"><input type="number" value="'+b.amt+'" id="ba_'+i+'" style="max-width:96px"><button class="del" style="flex:none;font-size:18px;padding:0 6px;color:var(--red)" onclick="delCat('+i+')">✕</button></div>').join('');
   sysModal('EDIT MONEY','<label>Currency symbol</label><input id="fi_cur" value="'+esc(f.currency)+'" maxlength="3"><label>Monthly income</label><input id="fi_inc" type="number" value="'+(f.income||'')+'"><label>Monthly savings goal</label><input id="fi_goal" type="number" value="'+(f.savingsGoal||'')+'"><label>Spendable budget categories</label>'+bg+'<button class="btn ghost sm" style="margin-top:8px" onclick="addCat()">+ ADD CATEGORY</button><button class="btn" style="margin-top:12px" onclick="saveMoney()">SAVE</button>','CLOSE');}
@@ -561,16 +589,61 @@ function viewLog(){
   for(let i=0;i<42;i++){const d=new Date(pre);d.setDate(pre.getDate()+i);const ds=dstr(d);const rec=S.history[ds];let cls='cell';const future=d>today;
     if(dayCounts(ds))cls+=' full';else if(rec&&rec.done.length)cls+=' partial';if(ds===todayStr())cls+=' today';
     cells+='<div class="'+cls+'" '+(future?'':'onclick="dayDetail(\''+ds+'\')"')+' style="'+(future?'opacity:.25':'cursor:pointer')+'">'+d.getDate()+'</div>';}
-  const wk=weekStats(),lastW=S.weights.slice(-1)[0];
+  const wk=weekStats();
   const tils=Object.keys(S.history).filter(k=>S.history[k].til).sort().reverse().slice(0,14).map(k=>'<div class="til-row"><div class="td">'+prettyDate(k)+'</div><div class="tt">'+esc(S.history[k].til)+'</div></div>').join('')||'<div class="empty">No notes yet — add one on Home.</div>';
-  const weightPanel=S.profile.weightOn?'<div class="panel"><div class="panel-title"><span class="dot"></span>Weight Tracker</div><div class="tiny">Current: <b style="color:var(--accent)">'+(lastW?lastW.kg+' '+S.profile.units:'—')+'</b>'+(S.profile.goalWeight?' · Goal: <b style="color:var(--gold)">'+S.profile.goalWeight+' '+S.profile.units+'</b>':'')+'</div><canvas id="wchart" height="120" style="width:100%;margin-top:10px"></canvas><div class="wlog"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="today\'s weight"><button class="btn sm" style="width:auto;padding:12px 18px" onclick="logWeight()">LOG</button></div></div>':'';
+  const weightPanel=S.profile.weightOn?weightPanelHTML():'';
   return '<div class="panel"><div class="panel-title"><span class="dot"></span>Quest Calendar</div><div class="cal">'+header+cells+'</div><p class="tiny" style="margin-top:11px"><span style="color:var(--accent)">■</span> streak day · <span style="color:var(--accent2)">■</span> partial · <span style="color:var(--gold)">▢</span> today — tap any day</p></div>'+
    '<div class="panel"><div class="panel-title"><span class="dot"></span>Last 14 Days · XP</div><canvas id="activity" height="90" style="width:100%;display:block"></canvas><p class="tiny" style="margin-top:8px">This week: <b style="color:var(--orange)">'+wk.perfect+'</b> streak days · <b style="color:var(--accent)">'+wk.cleared+'</b> quests · <b style="color:var(--gold)">'+wk.xp+'</b> XP.</p></div>'+
    weightPanel+
    '<div class="panel"><div class="panel-title"><span class="dot" style="background:var(--green)"></span>📝 Learning Log</div>'+tils+'</div>';
 }
+function weightStats(){
+  const ws=S.weights;if(!ws.length)return null;const u=S.profile.units;const goal=S.profile.goalWeight;
+  const cur=ws[ws.length-1].kg,start=ws[0].kg,last=ws[ws.length-1].date;
+  let weekAgo=null;for(let i=ws.length-1;i>=0;i--){if(daysBetween(ws[i].date,last)>=7){weekAgo=ws[i].kg;break;}}
+  const dTotal=+(cur-start).toFixed(1),dWeek=weekAgo!=null?+(cur-weekAgo).toFixed(1):null;
+  let pct=null,toGo=null,reached=false;
+  if(goal!=null&&goal!==start){pct=Math.max(0,Math.min(100,Math.round((start-cur)/(start-goal)*100)));toGo=+Math.abs(cur-goal).toFixed(1);reached=start>goal?cur<=goal:cur>=goal;}
+  else if(goal!=null){pct=100;toGo=0;reached=true;}
+  // direction that counts as progress toward goal (or just "down" if no goal)
+  const wantDown=goal!=null?start>goal:true;
+  return{cur,start,goal,dTotal,dWeek,pct,toGo,reached,wantDown,n:ws.length,u};
+}
+function deltaTag(d,wantDown){if(d==null)return '<span class="flat">—</span>';if(d===0)return '<span class="flat">±0</span>';const good=(d<0)===wantDown;const arrow=d<0?'↓':'↑';return '<span class="'+(good?'down':'up')+'">'+arrow+' '+Math.abs(d)+'</span>';}
+function weightPanelHTML(){
+  const w=weightStats(),u=S.profile.units;
+  let head;
+  if(!w){head='<div class="empty" style="padding:8px 0">Log your weight below to start tracking trend &amp; goal progress.</div>';}
+  else{
+    const goalCard=w.goal!=null?'<div class="wc"><b style="color:var(--gold)">'+w.goal+'</b><span>Goal '+u+'</span></div>':'<div class="wc"><b style="color:var(--muted)">—</b><span>Set goal ⚙</span></div>';
+    const cards='<div class="wstat"><div class="wc"><b>'+w.start+'</b><span>Start '+u+'</span></div><div class="wc now"><b style="color:var(--accent)">'+w.cur+'</b><span>Now '+u+'</span></div>'+goalCard+'</div>';
+    let prog='';
+    if(w.goal!=null&&w.pct!=null){
+      prog='<div class="wgoal"><span>'+(w.reached?'🎉 Goal reached!':'Progress to goal')+'</span><span class="num">'+(w.reached?'100%':w.pct+'% · '+w.toGo+' '+u+' to go')+'</span></div><div class="bar"><i style="width:'+w.pct+'%;background:linear-gradient(90deg,var(--accent),var(--gold))"></i></div>';
+    }
+    const summary='<p class="tiny" style="margin-top:11px">This week: <b>'+deltaTag(w.dWeek,w.wantDown)+' '+u+'</b> · Since start: <b>'+deltaTag(w.dTotal,w.wantDown)+' '+u+'</b> · '+w.n+' log'+(w.n>1?'s':'')+'</p>';
+    head=cards+prog+summary;
+  }
+  return '<div class="panel"><div class="panel-title"><span class="dot"></span>Weight Tracker</div>'+head+
+    '<canvas id="wchart" height="130" style="width:100%;margin-top:12px"></canvas>'+
+    '<div class="wlog"><input id="wkg" type="number" inputmode="decimal" step="0.1" placeholder="today\'s weight ('+u+')"><button class="btn sm" style="width:auto;padding:12px 18px" onclick="logWeight()">LOG</button></div>'+
+    '<p class="tiny" style="margin-top:7px;color:var(--muted)">Logs once per day — re-log to overwrite today. Set a goal weight in ⚙ Settings.</p></div>';
+}
 function logWeight(){const v=parseFloat($('#wkg').value);if(!v)return;const d=todayStr();const ex=S.weights.find(w=>w.date===d);if(ex)ex.kg=v;else S.weights.push({date:d,kg:v});S.weights.sort((a,b)=>a.date<b.date?-1:1);save();toast('Weight logged');checkAchievements(true);render();}
-function drawWeightChart(){const c=$('#wchart');if(!c||!c.clientWidth)return;const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=120;c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);const data=S.weights.slice(-30);if(!data.length){x.fillStyle='#868da4';x.font='12px Sora';x.fillText('Log your weight to see the trend.',10,60);return;}const goal=S.profile.goalWeight;const ys=data.map(d=>d.kg).concat(goal?[goal]:[]);let mn=Math.min(...ys)-1,mx=Math.max(...ys)+1;if(mx-mn<2){mx+=1;mn-=1;}const px=i=>data.length<2?w/2:10+i*(w-20)/(data.length-1),py=v=>10+(mx-v)/(mx-mn)*(h-20);if(goal){x.strokeStyle='rgba(236,199,126,.5)';x.setLineDash([5,4]);x.beginPath();x.moveTo(0,py(goal));x.lineTo(w,py(goal));x.stroke();x.setLineDash([]);}x.strokeStyle=getCss('--accent');x.lineWidth=2;x.beginPath();data.forEach((d,i)=>{i?x.lineTo(px(i),py(d.kg)):x.moveTo(px(i),py(d.kg));});x.stroke();x.fillStyle=getCss('--accent');data.forEach((d,i)=>{x.beginPath();x.arc(px(i),py(d.kg),3,0,7);x.fill();});}
+function drawWeightChart(){const c=$('#wchart');if(!c||!c.clientWidth)return;const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=130;c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);const data=S.weights.slice(-30);if(!data.length){x.fillStyle='#868da4';x.font='12px Sora';x.textAlign='center';x.fillText('Log your weight to see the trend.',w/2,h/2);return;}
+  const u=S.profile.units,goal=S.profile.goalWeight;const ys=data.map(d=>d.kg).concat(goal?[goal]:[]);let mn=Math.min(...ys),mx=Math.max(...ys);const pad=Math.max(0.6,(mx-mn)*0.18);mn-=pad;mx+=pad;if(mx-mn<1){mx+=.5;mn-=.5;}
+  const L=8,R=w-40,T=12,B=h-16;const px=i=>data.length<2?(L+R)/2:L+i*(R-L)/(data.length-1),py=v=>T+(mx-v)/(mx-mn)*(B-T);
+  const acc=getCss('--accent').trim()||'#6fb0ff';
+  if(goal){const gy=py(goal);x.strokeStyle='rgba(236,199,126,.55)';x.setLineDash([5,4]);x.beginPath();x.moveTo(L,gy);x.lineTo(R,gy);x.stroke();x.setLineDash([]);x.fillStyle='rgba(236,199,126,.85)';x.font='600 9px Space Grotesk';x.textAlign='left';x.fillText('goal '+goal,R+3,gy+3);}
+  // area fill
+  x.beginPath();data.forEach((d,i)=>{i?x.lineTo(px(i),py(d.kg)):x.moveTo(px(i),py(d.kg));});x.lineTo(px(data.length-1),B);x.lineTo(px(0),B);x.closePath();const g=x.createLinearGradient(0,T,0,B);g.addColorStop(0,'rgba(111,176,255,.22)');g.addColorStop(1,'rgba(111,176,255,0)');x.fillStyle=g;x.fill();
+  // line
+  x.strokeStyle=acc;x.lineWidth=2;x.beginPath();data.forEach((d,i)=>{i?x.lineTo(px(i),py(d.kg)):x.moveTo(px(i),py(d.kg));});x.stroke();
+  x.fillStyle=acc;data.forEach((d,i)=>{x.beginPath();x.arc(px(i),py(d.kg),i===data.length-1?4:2.5,0,7);x.fill();});
+  // last value label
+  const lv=data[data.length-1].kg,lvy=py(lv);x.fillStyle='#eef0f7';x.font='700 10px Space Grotesk';x.textAlign='left';x.fillText(lv+' '+u,Math.min(px(data.length-1)+6,R-2),Math.max(T+6,lvy-6));
+  // min/max y labels
+  x.fillStyle='#7e8aac';x.font='9px Space Grotesk';x.textAlign='left';x.fillText(mx.toFixed(1),R+3,T+4);x.fillText(mn.toFixed(1),R+3,B);}
 function drawActivity(){const c=$('#activity');if(!c||!c.clientWidth)return;const dpr=window.devicePixelRatio||1,w=c.clientWidth,h=90;c.width=w*dpr;c.height=h*dpr;const x=c.getContext('2d');x.scale(dpr,dpr);const days=[];const d=new Date();d.setDate(d.getDate()-13);for(let i=0;i<14;i++){const dd=new Date(d);dd.setDate(d.getDate()+i);const ds=dstr(dd);days.push({xp:dayXp(S.history[ds]),full:dayCounts(ds)});}const max=Math.max(60,...days.map(o=>o.xp)),gap=4,bw=(w-13*gap)/14;days.forEach((o,i)=>{const bh=Math.max(2,o.xp/max*(h-12)),pxx=i*(bw+gap);x.fillStyle=o.full?getCss('--accent'):'rgba(148,166,255,0.35)';rr(x,pxx,h-bh,bw,bh,3);x.fill();});}
 function rr(x,a,b,w,h,r){r=Math.min(r,w/2,h/2);x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
 function dayDetail(ds){const rec=S.history[ds];let body;if(!rec||!rec.done.length){body='<p class="center tiny">Nothing cleared this day.</p>';}else{const meta=rec.meta||{};const items=rec.done.map(id=>{const m=meta[id]||{};return '<div class="fixed-row"><span>'+esc(m.t||id)+' '+(m.s?'<span class="tiny">'+m.s+'</span>':'')+'</span><span class="amt">'+(m.xp?'+'+m.xp+' XP':'✓')+'</span></div>';}).join('');const til=rec.til?'<div class="tiny" style="margin-top:12px;padding:10px;background:rgba(0,0,0,.2);border-radius:10px">📝 '+esc(rec.til)+'</div>':'';body='<p class="center" style="margin-bottom:12px">'+(dayCounts(ds)?'<span style="color:var(--orange)">🔥 Streak day</span>':'<span style="color:var(--accent2)">'+rec.done.length+' cleared</span>')+' · '+dayXp(rec)+' XP</p>'+items+til;}sysModal(prettyDate(ds),body,'CLOSE');}
@@ -588,15 +661,17 @@ how:`<h4>How The System works</h4><p>Turn the life you want into <b>daily quests
 quests:`<h4>Building good quests</h4><p>Tap <b>Manage quests</b> on Home. For each: a title, which <b>attribute</b> it trains, a <b>difficulty</b> (sets the XP/gold), and which <b>days</b> it repeats.</p>
 <ul><li>Keep them <b>specific & doable</b>: "Read 10 pages" beats "read more".</li><li>Start small — 5–8 quests is plenty. You can always add more.</li><li>Use the <b>preset library</b> for quick ideas across Fitness, Nutrition, Mind, Work, Self-care & Money.</li><li>Harder quests give more gold — so your rewards are genuinely earned.</li></ul>`,
 streak:`<h4>Streaks & keystones</h4><p>Your streak is protected by your <b>keystone quests</b> only (mark 2–3 with the ⭐). Clear those each day and your streak survives — even if you skip the smaller stuff.</p>
-<ul><li>Pick keystones that matter most to your #1 goal.</li><li>Clearing all keystones gives a daily <b>bonus</b> (+XP, +Gold).</li><li>A missed keystone day breaks the streak — so keep the bar realistic.</li></ul>`,
+<ul><li>Pick keystones that matter most to your #1 goal.</li><li>Clearing all keystones gives a daily <b>bonus</b> (+XP, +Gold).</li><li>A missed keystone day breaks the streak — so keep the bar realistic.</li></ul>
+<p><b>Per-quest streaks.</b> Every quest also shows its own <span class="hl">🔥 streak</span> — how many scheduled days in a row you've cleared it. Counts only on days that quest is due; today stays "alive" until the day ends.</p>`,
 money:`<h4>Money tracker (optional)</h4><p>Enable it in the MONEY tab. Set your <b>income</b>, a <b>savings goal</b>, and <b>budget categories</b>. Log spends in seconds; see a donut of where money goes and your monthly savings history.</p>
-<p>Projected savings = your goal, minus anything you overspend past your spendable budget. Stay under budget and your savings stay intact.</p>`,
+<p>Projected savings = your goal, minus anything you overspend past your spendable budget. Stay under budget and your savings stay intact.</p>
+<p>Each category shows <b>how much is left</b> (or how far over). Add a category on the fly while logging a spend — it appears in your budget automatically; set its limit anytime in Edit. Categories with no limit just track the total.</p>`,
 mind:`<h4>Mindset</h4><ul><li><b>Consistency &gt; intensity.</b> A small quest done daily beats a big one done rarely.</li><li><b>Compare to last week's you</b>, not anyone else.</li><li><b>Spend your gold.</b> Earned rewards keep you going — guilt-free.</li><li><b>Write one daily note.</b> Over months it becomes proof of how far you've come.</li></ul>`,
 };
 
 /* ============================================================ QUEST MANAGER */
 function manageQuests(){
-  const list=S.quests.length?S.quests.map(q=>'<div class="qedit"><div class="qi"><div class="t">'+esc(q.title)+'</div><div class="m">'+q.stat+' · '+freqLabel(q.days)+' · +'+q.xp+'XP</div></div><button class="star" onclick="toggleKey(\''+q.id+'\')">'+(q.key?'⭐':'☆')+'</button><button class="ed" onclick="editQuest(\''+q.id+'\')">✎</button><button class="dl" onclick="delQuest(\''+q.id+'\')">✕</button></div>').join(''):'<div class="empty">No quests yet.</div>';
+  const list=S.quests.length?S.quests.map(q=>{const rn=questStreak(q);return '<div class="qedit"><div class="qi"><div class="t">'+esc(q.title)+'</div><div class="m">'+q.stat+' · '+freqLabel(q.days)+' · +'+q.xp+'XP'+(rn>=2?' · <span style="color:var(--orange)">🔥'+rn+'</span>':'')+'</div></div><button class="star" onclick="toggleKey(\''+q.id+'\')">'+(q.key?'⭐':'☆')+'</button><button class="ed" onclick="editQuest(\''+q.id+'\')">✎</button><button class="dl" onclick="delQuest(\''+q.id+'\')">✕</button></div>';}).join(''):'<div class="empty">No quests yet.</div>';
   sysModal('MANAGE QUESTS',list+'<button class="btn" style="margin-top:14px" onclick="editQuest()">+ NEW QUEST</button><button class="btn ghost sm" style="margin-top:8px" onclick="presetPicker()">+ ADD FROM LIBRARY</button><p class="tiny center" style="margin-top:10px">⭐ = keystone (protects your streak). Aim for 2–3.</p>','DONE');
 }
 function freqLabel(days){if(days.length===7)return'Daily';if(days.length===5&&!days.includes(0)&&!days.includes(6))return'Weekdays';if(days.length===1)return DAYNAMES[days[0]];return days.map(d=>DAYNAMES[d][0]).join('');}
