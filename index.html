@@ -188,6 +188,30 @@ label{font-size:10.5px;color:var(--muted);letter-spacing:1px;display:block;margi
 .ob-areas button{padding:12px 14px;border-radius:13px;border:1px solid var(--line);background:var(--surface);color:var(--txt2);font-size:13px;font-weight:500;}
 .ob-areas button.sel{border-color:var(--accent);background:rgba(148,166,255,.12);color:var(--accent);}
 .reslink{display:inline-block;margin-top:9px;color:var(--accent);border:1px solid var(--line2);border-radius:10px;padding:7px 12px;font-size:12px;text-decoration:none;font-weight:600;}
+/* ---- juice: press feedback, floating xp, combo, loot ---- */
+.btn:active,.redeem:active,.icon-btn:active,.qcheck:active,.nav button:active,.chipsel button:active{transform:scale(.95);transition:transform .06s;}
+.nav button.active .ni{animation:navpop .4s cubic-bezier(.2,1.4,.4,1);}
+@keyframes navpop{0%{transform:scale(1)}45%{transform:scale(1.35) translateY(-2px)}100%{transform:scale(1)}}
+.floatxp{position:fixed;z-index:210;font-family:'Space Grotesk';font-weight:800;font-size:16px;pointer-events:none;transform:translate(-50%,-50%);animation:floatup 1.05s cubic-bezier(.2,.7,.3,1) forwards;text-shadow:0 2px 10px rgba(0,0,0,.6);white-space:nowrap;}
+@keyframes floatup{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}18%{opacity:1;transform:translate(-50%,-135%) scale(1.15)}100%{opacity:0;transform:translate(-50%,-280%) scale(1)}}
+.combo-pop{position:fixed;left:50%;top:24%;transform:translateX(-50%);z-index:205;font-family:'Space Grotesk';font-weight:800;pointer-events:none;text-align:center;}
+.combo-pop .cx{display:block;font-size:38px;line-height:1;background:linear-gradient(100deg,var(--accent),var(--gold),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 0 14px rgba(255,206,107,.55));animation:comboIn .55s cubic-bezier(.2,1.5,.4,1);}
+.combo-pop .cs{display:block;font-size:12px;letter-spacing:2px;color:var(--gold);margin-top:4px;text-shadow:0 0 10px rgba(255,206,107,.6);}
+@keyframes comboIn{0%{transform:scale(.3) rotate(-10deg);opacity:0}55%{transform:scale(1.2) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+.quest.done .qtitle{animation:none;}
+.quest.pop{animation:qpop .4s cubic-bezier(.2,1.3,.4,1);}
+@keyframes qpop{0%{transform:scale(1)}30%{transform:scale(1.015);background:rgba(111,176,255,.06)}100%{transform:scale(1)}}
+.loot{position:relative;overflow:hidden;text-align:center;background:linear-gradient(150deg,rgba(255,206,107,.16),rgba(180,137,255,.08) 70%,transparent);border-color:rgba(255,206,107,.4);cursor:pointer;}
+.loot::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);animation:sheen 2.6s ease-in-out infinite;pointer-events:none;}
+@keyframes sheen{0%{left:-60%}60%,100%{left:120%}}
+.loot .chest{font-size:46px;animation:wob 1.8s ease-in-out infinite;filter:drop-shadow(0 4px 12px rgba(255,206,107,.4));}
+@keyframes wob{0%,100%{transform:rotate(-5deg) scale(1)}50%{transform:rotate(5deg) scale(1.08)}}
+.loot .lootcta{display:inline-block;margin-top:8px;font-family:'Space Grotesk';font-size:12px;letter-spacing:2px;font-weight:700;color:var(--gold);text-shadow:0 0 12px rgba(255,206,107,.6);animation:pulseTxt 1.4s ease-in-out infinite;}
+@keyframes pulseTxt{0%,100%{opacity:.6}50%{opacity:1}}
+.hero-name{background:linear-gradient(100deg,#fff,var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.tag.run{animation:flamePulse 1.6s ease-in-out infinite;}
+@keyframes flamePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,187,126,0)}50%{box-shadow:0 0 10px 1px rgba(255,187,126,.5)}}
+.streakflame{display:inline-block;animation:wob 1.4s ease-in-out infinite;}
 </style>
 </head>
 <body>
@@ -212,7 +236,7 @@ label{font-size:10.5px;color:var(--muted);letter-spacing:1px;display:block;margi
    ============================================================ */
 const $=(s,el=document)=>el.querySelector(s);
 const STORE='thesystem_v1';
-const APP_VERSION='1.7';
+const APP_VERSION='1.8';
 const ALL=[0,1,2,3,4,5,6];
 const DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 function parseD(s){const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c);}
@@ -316,7 +340,7 @@ function defaultState(){return{
     {id:'r6',ic:'🛍️',name:'Buy something you want',cost:1500},
   ],
   redeemed:[], premium:false, lastOpen:todayStr(), lastRecap:null,
-  achievements:[], challengeClaimed:{}, tourDone:false,
+  achievements:[], challengeClaimed:{}, tourDone:false, sound:true, lastLoot:null,
 };}
 function normalize(s){
   const d=defaultState();
@@ -340,6 +364,8 @@ function normalize(s){
   if(!s.theme||!THEMES[s.theme])s.theme='indigo';
   s.onboarded=!!s.onboarded;
   s.tourDone=!!s.tourDone;
+  if(typeof s.sound!=='boolean')s.sound=true;
+  if(s.lastLoot!==null&&typeof s.lastLoot!=='string')s.lastLoot=null;
   return s;
 }
 function load(){try{const r=JSON.parse(localStorage.getItem(STORE));return r&&r.profile?normalize(r):defaultState();}catch(e){return defaultState();}}
@@ -366,7 +392,7 @@ const ACHV=[
 function checkAchievements(silent){
   const newly=[];ACHV.forEach(a=>{if(!S.achievements.includes(a.id)&&a.test()){S.achievements.push(a.id);newly.push(a);}});
   if(newly.length){const bonus=newly.reduce((s,a)=>s+a.g,0);S.gold+=bonus;save();
-    if(!silent){confetti();const a=newly[0];sysModal('ACHIEVEMENT UNLOCKED','<div class="sys-big" style="font-size:40px">'+a.ic+'</div><div class="sys-big" style="font-size:18px">'+a.name+'</div><p class="center">'+a.desc+'<br><span class="hl">+'+a.g+' Gold</span>'+(newly.length>1?'<br><span class="tiny">+'+(newly.length-1)+' more unlocked</span>':'')+'</p>',"NICE",null,true);}else{toast('🏅 '+newly[0].name+' unlocked');}}
+    if(!silent){confetti();sfx('achv');const a=newly[0];sysModal('ACHIEVEMENT UNLOCKED','<div class="sys-big" style="font-size:44px">'+a.ic+'</div><div class="sys-big" style="font-size:18px">'+a.name+'</div><p class="center">'+a.desc+'<br><span class="hl">+'+a.g+' Gold</span>'+(newly.length>1?'<br><span class="tiny">+'+(newly.length-1)+' more unlocked 👀</span>':'')+'</p>',"BET 🏆",null,true);}else{sfx('achv');toast('🏅 '+newly[0].name+' unlocked — W');}}
   return newly.length;
 }
 
@@ -375,30 +401,34 @@ function questsToday(){return S.quests.filter(q=>q.days.includes(dow()));}
 function dayRecord(d=todayStr()){if(!S.history[d])S.history[d]={done:[],meta:{}};return S.history[d];}
 function keystonesDue(ds){const dw=parseD(ds).getDay();return S.quests.filter(q=>q.key&&q.days.includes(dw));}
 function dayCounts(ds){const rec=S.history[ds];if(!rec)return false;const ks=keystonesDue(ds);return ks.length>0&&ks.every(q=>rec.done.includes(q.id));}
-function toggleQuest(q){
+function toggleQuest(q,ev){
   const rec=dayRecord(),i=rec.done.indexOf(q.id);
   if(i>=0){rec.done.splice(i,1);if(rec.meta)delete rec.meta[q.id];S.totalXp=Math.max(0,S.totalXp-q.xp);S.gold=Math.max(0,S.gold-q.gold);
     S.stats[q.stat]=Math.max(0,S.stats[q.stat]-1);S.totalCompleted=Math.max(0,S.totalCompleted-1);
-    if(!dayCounts(todayStr()))rec.streakBonus=false;save();render();
+    if(!dayCounts(todayStr()))rec.streakBonus=false;COMBO=0;sfx('undo');save();render();
   }else{
     const before=levelInfo(S.totalXp).level,beforeRank=rankFor(before);
+    const now=Date.now();COMBO=(now-COMBO_T<10000)?COMBO+1:1;COMBO_T=now;
+    const comboBonus=COMBO>=2?Math.min(30,(COMBO-1)*5):0;
     rec.done.push(q.id);rec.meta=rec.meta||{};rec.meta[q.id]={t:q.title,s:q.stat,xp:q.xp};
-    S.totalXp+=q.xp;S.gold+=q.gold;S.stats[q.stat]+=1;S.totalCompleted+=1;save();
-    if(navigator.vibrate)navigator.vibrate(12);
+    S.totalXp+=q.xp;S.gold+=q.gold+comboBonus;S.stats[q.stat]+=1;S.totalCompleted+=1;save();
+    if(navigator.vibrate)navigator.vibrate(COMBO>=3?[10,30,10]:14);
+    sfx('tick');sfx('coin');
+    if(ev){floatText(ev.clientX,ev.clientY-8,'+'+q.xp+' XP',getCss('--accent'));setTimeout(()=>floatText(ev.clientX+20,ev.clientY-2,'+'+(q.gold+comboBonus)+' G',getCss('--gold')),110);}
     const after=levelInfo(S.totalXp).level,afterRank=rankFor(after);
     let shown=false;
-    if(afterRank!==beforeRank){render();rankUpMsg(afterRank);shown=true;}
-    else if(after>before){render();levelUpMsg(after);shown=true;}
-    else {toast('+'+q.xp+' XP · +'+q.gold+' G');render();}
+    if(afterRank!==beforeRank){render();sfx('rank');rankUpMsg(afterRank);shown=true;}
+    else if(after>before){render();sfx('level');levelUpMsg(after);shown=true;}
+    else {if(COMBO>=2){comboPop(COMBO);sfx('combo');}toast(hypeToast(q.xp,q.gold+comboBonus,COMBO));render();}
     if(dayCounts(todayStr())&&!rec.streakBonus){rec.streakBonus=true;const cur=streakInfo().cur,bonus=20+Math.min(80,cur*5);S.totalXp+=bonus;S.gold+=bonus;save();
-      const milestone=[7,14,30,50,100,200].includes(cur);
-      if(!shown||milestone){sysModal(milestone?'STREAK MILESTONE':'STREAK SECURED','<div class="sys-big">🔥 '+cur+'-DAY STREAK</div><p class="center">'+(milestone?'Incredible consistency — '+cur+' days straight!':'Keystones done. Streak locked in for today.')+'<br><span class="hl">+'+bonus+' XP · +'+bonus+' Gold</span></p>','CLOSE',null,milestone);}
+      const milestone=[7,14,30,50,100,200].includes(cur);sfx('loot');
+      if(!shown||milestone){sysModal(milestone?'STREAK MILESTONE':'STREAK SECURED','<div class="sys-big">🔥 '+cur+'-DAY STREAK</div><p class="center">'+(milestone?cur+' days straight — absolutely locked in 🔒 you\'re built different.':'Keystones done ✅ streak safe for today. Don\'t break the chain.')+'<br><span class="hl">+'+bonus+' XP · +'+bonus+' Gold</span></p>','KEEP IT UP',null,milestone);}
       shown=true;render();}
     checkAchievements(shown);
     checkChallenge();
   }
 }
-function qtap(id){const q=S.quests.find(x=>x.id===id);if(q)toggleQuest(q);}
+function qtap(id,ev){const q=S.quests.find(x=>x.id===id);if(q)toggleQuest(q,ev);}
 function qexp(id){const e=$('#exp_'+id),b=$('#eb_'+id);if(!e)return;const h=e.classList.toggle('hidden');if(b)b.textContent=h?'▾ details':'▴ hide';}
 
 /* ---------- leveling ---------- */
@@ -447,7 +477,9 @@ function attrScores(days=14){const cnt={};Object.keys(STATS).forEach(k=>cnt[k]=0
   const wk=attrExpect(),sc={};Object.keys(STATS).forEach(k=>{const exp=(wk[k]/7)*days;sc[k]=exp>0?Math.min(100,Math.round(cnt[k]/exp*100)):0;});return sc;}
 
 /* ============================================================ RENDER */
-let TAB='home',CODEXTAB='how';
+let TAB='home',CODEXTAB='how',COMBO=0,COMBO_T=0;
+const HYPE=["+{x} XP · +{g} G","locked in 🔒 +{x} XP","W. +{x} XP · +{g} G","ate that 😤 +{x} XP","+{x} XP lets gooo 🔥","clean +{x} XP · +{g} G","no cap +{x} XP 💪","that's the grind 📈 +{x} XP"];
+function hypeToast(x,g,combo){if(combo>=2)return combo+'x COMBO 🔥 +'+x+' XP · +'+g+' G';return HYPE[Math.floor(Math.random()*HYPE.length)].replace('{x}',x).replace('{g}',g);}
 function render(){
   if(!S.onboarded){startOnboarding();return;}
   applyTheme();
@@ -469,7 +501,7 @@ function heroHTML(){
 function questHTML(q,rec){
   const done=rec.done.includes(q.id),run=questStreak(q);
   const runTag=run>=1?'<span class="tag run" title="'+run+'-day streak on this quest">🔥 '+run+'</span>':'';
-  return '<div class="quest '+(done?'done':'')+'"><button class="qcheck" onclick="qtap(\''+q.id+'\')">✓</button>'+
+  return '<div class="quest '+(done?'done':'')+'"><button class="qcheck" onclick="qtap(\''+q.id+'\',event)">✓</button>'+
    '<div class="qbody" onclick="qexp(\''+q.id+'\')"><div class="qtitle">'+esc(q.title)+'</div>'+
    (q.note?'<div class="qsub">'+esc(q.note)+'</div>':'')+
    '<div class="qtags">'+runTag+'<span class="tag">'+q.stat+'</span><span class="tag xp">+'+q.xp+' XP</span><span class="tag gold">+'+q.gold+' G</span>'+(q.key?'<span class="tag key">⭐ KEYSTONE</span>':'')+'</div>'+
@@ -480,13 +512,15 @@ function viewHome(){
   const qs=questsToday(),rec=dayRecord(),doneN=qs.filter(q=>rec.done.includes(q.id)).length;
   const ks=keystonesDue(todayStr()),keyLeft=ks.filter(q=>!rec.done.includes(q.id)).length;
   let greet;
-  if(!qs.length)greet='No quests for today yet — tap “Manage quests” to add some.';
-  else if(ks.length===0)greet='Tip: mark 2–3 quests as 🔥 keystones — those protect your streak.';
-  else if(doneN===0)greet='A new day. Clear your 🔥 keystones to keep the streak alive.';
-  else if(keyLeft>0)greet=keyLeft+' keystone'+(keyLeft>1?'s':'')+' left to lock today\'s streak 🔥.';
-  else if(doneN>=qs.length)greet='Perfect clear. You grow stronger.';
-  else greet='🔥 Streak secured. Everything else is bonus XP.';
-  let body=heroHTML()+'<div class="panel"><div class="q-head"><div class="panel-title" style="margin:0"><span class="dot"></span>Daily Quest</div><div class="q-progress num">'+doneN+'/'+qs.length+' cleared</div></div><div class="greet">'+greet+'</div>';
+  if(!qs.length)greet='No quests yet — hit “Manage quests” and stack a few 🎯';
+  else if(ks.length===0)greet='Pro move: tag 2–3 quests as ⭐ keystones — they carry your streak.';
+  else if(doneN===0)greet='New day, main character energy ✨ Clear your keystones first.';
+  else if(keyLeft>0)greet=keyLeft+' keystone'+(keyLeft>1?'s':'')+' left to lock today\'s streak 🔒🔥';
+  else if(doneN>=qs.length)greet='Perfect clear. You ate today 😤 no crumbs left.';
+  else greet='Streak secured 🔒 everything else is bonus XP — go crazy.';
+  let body=heroHTML();
+  if(lootReady())body+='<div class="panel loot" onclick="claimLoot()"><div class="chest">🎁</div><div class="sys-big" style="font-size:16px;margin:2px 0 0">Daily Loot Drop</div><p class="tiny" style="margin:2px 0 0">Free gold just for showing up. Don\'t sleep on it 👀</p><span class="lootcta">TAP TO OPEN</span></div>';
+  body+='<div class="panel"><div class="q-head"><div class="panel-title" style="margin:0"><span class="dot"></span>Daily Quest</div><div class="q-progress num">'+doneN+'/'+qs.length+' cleared</div></div><div class="greet">'+greet+'</div>';
   body += qs.length? qs.map(q=>questHTML(q,rec)).join('') : '<div class="empty">No quests scheduled today.</div>';
   body += '<button class="btn ghost sm" style="margin-top:10px" onclick="manageQuests()">✏️ MANAGE QUESTS</button></div>';
   if(qs.length){const c=challenge(),pct=Math.min(100,Math.round(c.done/c.target*100));
@@ -567,7 +601,7 @@ function viewShop(){
    '<div class="panel"><div class="panel-title"><span class="dot"></span>Reward Shop</div>'+cards+'<button class="btn ghost sm" style="margin-top:6px" onclick="addReward()">+ ADD REWARD</button></div>'+
    '<div class="panel"><div class="panel-title"><span class="dot"></span>Recently Claimed</div>'+recent+'</div>';
 }
-function redeem(id){const r=S.rewards.find(x=>x.id===id);if(!r||S.gold<r.cost)return;S.gold-=r.cost;S.redeemed.push({name:r.name,cost:r.cost,date:todayStr()});save();if(navigator.vibrate)navigator.vibrate([20,40,20]);sysModal('REWARD UNLOCKED','<div class="sys-big">'+(r.ic||'🎁')+'</div><p class="center">You claimed <b>'+esc(r.name)+'</b> for <span class="hl">'+r.cost+' gold</span>.<br>Enjoy it — you earned it.</p>','NICE');checkAchievements(true);render();}
+function redeem(id){const r=S.rewards.find(x=>x.id===id);if(!r||S.gold<r.cost)return;S.gold-=r.cost;S.redeemed.push({name:r.name,cost:r.cost,date:todayStr()});save();if(navigator.vibrate)navigator.vibrate([20,40,20]);sfx('loot');sysModal('REWARD UNLOCKED','<div class="sys-big" style="font-size:44px">'+(r.ic||'🎁')+'</div><p class="center">Copped <b>'+esc(r.name)+'</b> for <span class="hl">'+r.cost+' gold</span>.<br>Zero guilt — you earned this one 😎</p>','LFG 🔥');checkAchievements(true);render();}
 function delReward(id){if(confirm('Remove this reward?')){S.rewards=S.rewards.filter(x=>x.id!==id);save();$('#modal-host').innerHTML='';render();}}
 let RF={};
 function rewardForm(id){const r=id?S.rewards.find(x=>x.id===id):null;RF=r?{...r}:{id:null,ic:'🎁',name:'',cost:300};
@@ -717,7 +751,7 @@ function obNext(){const s=OB.step;
   if(s===1){const n=$('#ob_name').value.trim();OB.name=n||'Hunter';OB.units=$('#ob_units').value;OB.currency=$('#ob_cur').value.trim()||'₹';}
   OB.step++;renderOB();}
 function obBack(){OB.step--;renderOB();}
-function obWelcome(){return '<div class="center" style="font-size:30px">◇</div><div class="sys-big" style="font-size:19px">WELCOME, PLAYER</div><p>The System turns your goals into <b>daily quests</b>. Clear them to earn XP, level up, build streaks, and unlock rewards you choose.</p><p class="center tiny">Takes ~1 minute to set up. Your data stays on your device.</p><button class="btn" style="margin-top:16px" onclick="obNext()">BEGIN</button>';}
+function obWelcome(){return '<div class="center" style="font-size:30px">◇</div><div class="sys-big" style="font-size:19px">WELCOME, PLAYER</div><p>The System turns your goals into <b>daily quests</b>. Clear them → earn XP, level up, build streaks & unlock rewards you pick. Basically your life, but a game 🎮</p><p class="center tiny">~1 min to set up. Everything stays on your device.</p><button class="btn" style="margin-top:16px" onclick="obNext()">LET\'S GO 🚀</button>';}
 function obProfile(){return '<label>What should we call you?</label><input id="ob_name" value="'+esc(OB.name)+'" placeholder="Your name">'+
   '<div class="row2"><div><label>Weight unit</label><select id="ob_units"><option value="kg"'+(OB.units==='kg'?' selected':'')+'>kg</option><option value="lb"'+(OB.units==='lb'?' selected':'')+'>lb</option></select></div><div><label>Currency</label><input id="ob_cur" value="'+esc(OB.currency)+'" maxlength="3"></div></div>'+
   '<button class="btn" style="margin-top:16px" onclick="obNext()">NEXT</button><button class="btn ghost sm" style="margin-top:8px" onclick="obBack()">Back</button>';}
@@ -754,24 +788,44 @@ function finishOnboarding(){
 /* ============================================================ MODALS / MISC */
 function sysModal(head,html,btn,onClose,celebrate){btn=btn||'OK';$('#modal-host').innerHTML='<div class="overlay"><div class="sys'+(celebrate?' celebrate':'')+'"><div class="sys-h">SYSTEM · '+head+'</div>'+html+'<button class="btn" style="margin-top:16px" id="ovbtn">'+btn+'</button></div></div>';$('#ovbtn').onclick=()=>{$('#modal-host').innerHTML='';if(onClose)onClose();};}
 function confetti(){try{const c=['#9db1ff','#cbb2ff','#ffce6b','#74f0bd','#ff8fa0','#79e6da'];for(let i=0;i<28;i++){const d=document.createElement('div');d.className='confp';d.style.left=(Math.random()*100)+'vw';d.style.background=c[i%c.length];d.style.animationDelay=(Math.random()*0.25)+'s';d.style.opacity=0.9;document.body.appendChild(d);setTimeout(()=>d.remove(),1800);}}catch(e){}}
-function levelUpMsg(l){confetti();sysModal('NOTIFICATION','<div class="center" style="color:var(--gold);letter-spacing:4px;font-family:Space Grotesk;font-size:11px;font-weight:600">⟨ LEVEL UP ⟩</div><div class="sys-big">LEVEL '+l+'</div><p class="center">'+titleFor(l)+'<br>You\'ve grown stronger.</p>','CONTINUE',null,true);if(navigator.vibrate)navigator.vibrate([30,60,30,60,80]);}
-function rankUpMsg(rk){confetti();sysModal('RANK UP','<div class="center" style="color:var(--gold);letter-spacing:4px;font-family:Space Grotesk;font-size:11px;font-weight:600">⟨ RANK UP ⟩</div><div class="sys-big" style="font-size:46px">'+rk+'</div><p class="center">You\'ve ascended to <b style="color:var(--accent)">Rank '+rk+'</b>. The System recognises your growth.</p>','CONTINUE',null,true);if(navigator.vibrate)navigator.vibrate([40,60,40,60,120]);}
+/* ---------- sound FX (tiny web-audio synth, no assets) ---------- */
+let _AC;
+function tone(freq,dur,type,vol,delay){try{_AC=_AC||new (window.AudioContext||window.webkitAudioContext)();if(_AC.state==='suspended')_AC.resume();const t=_AC.currentTime+(delay||0);const o=_AC.createOscillator(),g=_AC.createGain();o.type=type||'sine';o.frequency.setValueAtTime(freq,t);o.connect(g);g.connect(_AC.destination);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol||0.05,t+0.01);g.gain.exponentialRampToValueAtTime(0.0001,t+(dur||0.15));o.start(t);o.stop(t+(dur||0.15)+0.02);}catch(e){}}
+function sfx(name){if(!S.sound)return;
+  if(name==='tick'){tone(680,0.07,'square',0.05);tone(920,0.08,'square',0.045,0.05);}
+  else if(name==='coin'){tone(988,0.06,'square',0.05);tone(1319,0.11,'square',0.05,0.05);}
+  else if(name==='undo'){tone(400,0.09,'sine',0.04);tone(300,0.1,'sine',0.035,0.06);}
+  else if(name==='level'){[523,659,784,1047].forEach((f,i)=>tone(f,0.2,'triangle',0.06,i*0.09));}
+  else if(name==='rank'){[440,554,659,880,1175].forEach((f,i)=>tone(f,0.24,'sawtooth',0.045,i*0.1));}
+  else if(name==='combo'){const b=560+Math.min(8,COMBO)*70;tone(b,0.08,'square',0.05);tone(b*1.5,0.09,'square',0.045,0.05);}
+  else if(name==='loot'){[659,880,1047,1319,1568].forEach((f,i)=>tone(f,0.16,'triangle',0.06,i*0.07));}
+  else if(name==='achv'){[784,1047,1319].forEach((f,i)=>tone(f,0.22,'triangle',0.06,i*0.1));}
+}
+function floatText(x,y,txt,color){try{const el=document.createElement('div');el.className='floatxp';el.textContent=txt;el.style.left=x+'px';el.style.top=y+'px';el.style.color=color||'var(--accent)';document.body.appendChild(el);setTimeout(()=>el.remove(),1080);}catch(e){}}
+function comboPop(n){try{const el=document.createElement('div');el.className='combo-pop';const words=['','','NICE','FIRE 🔥','ON ONE 🔥','UNREAL','GOATED','INSANE','UNSTOPPABLE','LEGENDARY 👑'];el.innerHTML='<span class="cx">'+n+'x COMBO</span><span class="cs">'+(words[Math.min(n,words.length-1)]||'LEGENDARY 👑')+'</span>';document.body.appendChild(el);setTimeout(()=>{el.style.transition='opacity .3s';el.style.opacity='0';},650);setTimeout(()=>el.remove(),1000);}catch(e){}}
+/* ---------- daily loot ---------- */
+function lootReady(){return S.lastLoot!==todayStr();}
+function claimLoot(){if(!lootReady())return;const roll=Math.random(),g=roll<0.08?200:roll<0.3?100:40+Math.floor(Math.random()*61);S.gold+=g;S.lastLoot=todayStr();save();sfx('loot');confetti();if(navigator.vibrate)navigator.vibrate([15,40,15,40,60]);
+  const flair=roll<0.08?'JACKPOT! 🎰':roll<0.3?'Big W 💎':'Daily bag secured 💰';
+  sysModal('DAILY LOOT','<div class="sys-big" style="font-size:48px">🎁</div><div class="sys-big" style="font-size:20px">'+flair+'</div><p class="center">You bagged <span class="hl">+'+g+' gold</span>.<br>Come back tomorrow for more 👀</p>','CLAIM IT',null,true);render();}
+function levelUpMsg(l){confetti();sysModal('NOTIFICATION','<div class="center" style="color:var(--gold);letter-spacing:4px;font-family:Space Grotesk;font-size:11px;font-weight:600">⟨ LEVEL UP ⟩</div><div class="sys-big">LEVEL '+l+'</div><p class="center">'+titleFor(l)+'<br>You leveled up — certified W 📈🔥</p>','LETS GO',null,true);if(navigator.vibrate)navigator.vibrate([30,60,30,60,80]);}
+function rankUpMsg(rk){confetti();sysModal('RANK UP','<div class="center" style="color:var(--gold);letter-spacing:4px;font-family:Space Grotesk;font-size:11px;font-weight:600">⟨ RANK UP ⟩</div><div class="sys-big" style="font-size:46px">'+rk+'</div><p class="center">Ranked up to <b style="color:var(--accent)">Rank '+rk+'</b> 🔥<br>The System sees you. Different breed.</p>','CERTIFIED 👑',null,true);if(navigator.vibrate)navigator.vibrate([40,60,40,60,120]);}
 /* ---------- weekly challenge ---------- */
 function weekKey(){const d=new Date();const oneJan=new Date(d.getFullYear(),0,1);const wk=Math.ceil(((d-oneJan)/86400000+oneJan.getDay()+1)/7);return d.getFullYear()+'-W'+wk;}
 function challenge(){const due=ALL.reduce((n,dy)=>n+S.quests.filter(q=>q.days.includes(dy)).length,0);const target=Math.max(12,Math.round(due*0.6));const done=weekStats().cleared;return{target,done,reward:120,claimed:!!S.challengeClaimed[weekKey()]};}
-function checkChallenge(){const c=challenge();if(c.done>=c.target&&!c.claimed){S.challengeClaimed[weekKey()]=true;S.gold+=c.reward;S.totalXp+=c.reward;save();confetti();sysModal('WEEKLY CHALLENGE COMPLETE','<div class="sys-big" style="font-size:34px">🎯</div><p class="center">You cleared <b>'+c.done+'</b> quests this week!<br><span class="hl">+'+c.reward+' XP · +'+c.reward+' Gold</span></p>','AWESOME',null,true);render();}}
+function checkChallenge(){const c=challenge();if(c.done>=c.target&&!c.claimed){S.challengeClaimed[weekKey()]=true;S.gold+=c.reward;S.totalXp+=c.reward;save();confetti();sfx('loot');sysModal('WEEKLY CHALLENGE COMPLETE','<div class="sys-big" style="font-size:38px">🎯</div><p class="center">Cleared <b>'+c.done+'</b> quests this week — you\'re him/her 😤<br><span class="hl">+'+c.reward+' XP · +'+c.reward+' Gold</span></p>','SECURED 🏆',null,true);render();}}
 function toast(msg){const h=$('#notif-host');const el=document.createElement('div');el.className='notif';el.textContent='◆ '+msg;h.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .4s';},1200);setTimeout(()=>el.remove(),1650);}
 function recapHTML(){const wk=weekStats(),sc=attrScores(),st=streakInfo();const ent=Object.entries(sc),best=ent.reduce((a,b)=>b[1]>a[1]?b:a),worst=ent.reduce((a,b)=>b[1]<a[1]?b:a);let wch='—';const ws=S.weights.slice(-8);if(ws.length>=2){const dd=+(ws[ws.length-1].kg-ws[0].kg).toFixed(1);wch=(dd>0?'+':'')+dd+' '+S.profile.units;}return '<div class="sys-big" style="font-size:20px">WEEK IN REVIEW</div><div class="hero-stats" style="margin-bottom:8px"><div class="chip done"><b class="num">'+wk.perfect+'</b><span>Streak Days</span></div><div class="chip"><b class="num">'+wk.cleared+'</b><span>Quests</span></div><div class="chip gold"><b class="num">'+wk.xp+'</b><span>XP</span></div></div><p>🔥 Streak: <b>'+st.cur+'</b> days'+(S.profile.weightOn?' · ⚖️ '+wch:'')+'</p><p>💪 Strongest: <b style="color:var(--green)">'+STATS[best[0]].name+' ('+best[1]+'%)</b><br>🎯 Focus next: <b style="color:var(--red)">'+STATS[worst[0]].name+' ('+worst[1]+'%)</b></p><p class="center tiny">Pick next week\'s focus and keep going, '+esc(S.profile.name)+'.</p>';}
 function showRecap(){sysModal('WEEKLY RECAP',recapHTML(),"LET'S GO");}
 /* ---------- app tour ---------- */
 const TOUR=[
- {ic:'◇',title:'Welcome to The System',text:'Your goals become daily quests. Clear them to earn XP, level up (rank E→S), and unlock rewards. Here\'s a 30-second tour.'},
- {ic:'⚔️',title:'Daily Quests',text:'On Home, tap a quest to complete it — you instantly gain XP and Gold. Use “Manage Quests” to add, edit, reorder difficulty, or delete any of them. Everything is editable.'},
- {ic:'🔥',title:'Keystones & Streak',text:'Mark 2–3 quests as ⭐ keystones. Only those count toward your streak — clear them daily and your chain survives even on busy days.'},
- {ic:'🎯',title:'Challenge & Achievements',text:'A weekly challenge and 15 achievements pay bonus Gold. See your badges and consistency web in the Stats tab.'},
- {ic:'◈',title:'Rewards Shop',text:'Spend earned Gold on real rewards you define — a treat, a movie, anything. Tap ✎ to edit a reward or “Add Reward” to create one.'},
- {ic:'$',title:'Money & Log',text:'Optionally track money (budget, spending, savings) in the Money tab. The Log tab has your calendar, charts, weight, and learning notes.'},
- {ic:'⚙',title:'Make it yours',text:'Settings has 5 themes, weight/money toggles, backup, and you can replay this tour anytime. Now go clear some quests!'},
+ {ic:'◇',title:'Welcome to The System',text:'Turn your goals into daily quests. Clear them → earn XP, level up (rank E→S), stack gold. 20-sec tour, then you\'re in 🚀'},
+ {ic:'⚔️',title:'Daily Quests',text:'Tap a quest to clear it — instant XP + gold, and combos if you chain them fast 🔥 Hit “Manage Quests” to add, edit or delete anything. Fully yours.'},
+ {ic:'🔥',title:'Keystones & Streak',text:'Tag 2–3 quests as ⭐ keystones. Only those hold your streak — clear them daily and the chain survives even on lazy days. Each quest also tracks its own 🔥 streak.'},
+ {ic:'🎯',title:'Challenges & Badges',text:'A weekly challenge + 15 achievements drop bonus gold. Peep your badges and consistency web in Stats. Gotta collect em all 👀'},
+ {ic:'🎁',title:'Loot & Rewards',text:'Grab a free Daily Loot drop on Home, then spend gold in the Shop on real-life rewards you set — treat, movie, whatever. Zero guilt.'},
+ {ic:'$',title:'Money & Log',text:'Optional money tracker (budget, spending, savings) in Money. The Log tab = calendar, charts, weight glow-up & your notes.'},
+ {ic:'⚙',title:'Make it yours',text:'Settings has themes, sound FX, weight/money toggles + backup. Replay this tour anytime. Now go lock in 🔒'},
 ];
 let TI=0;
 function startTour(){TI=0;renderTour();}
@@ -788,6 +842,7 @@ function openSettings(){const p=S.profile;const themeSel=Object.keys(THEMES).map
    '<div class="row2"><div><label>Weight unit</label><select id="s_units"><option value="kg"'+(p.units==='kg'?' selected':'')+'>kg</option><option value="lb"'+(p.units==='lb'?' selected':'')+'>lb</option></select></div><div><label>Goal weight</label><input id="s_goal" type="number" value="'+(p.goalWeight||'')+'"></div></div>'+
    '<label style="margin-top:12px"><input type="checkbox" id="s_won" '+(p.weightOn?'checked':'')+' style="width:auto;margin-right:8px">Track weight</label>'+
    '<label style="margin-top:8px"><input type="checkbox" id="s_mon" '+(S.finance.enabled?'checked':'')+' style="width:auto;margin-right:8px">Money tracker</label>'+
+   '<label style="margin-top:8px"><input type="checkbox" id="s_snd" '+(S.sound?'checked':'')+' style="width:auto;margin-right:8px">🔊 Sound FX (taps, level-ups, loot)</label>'+
    '<label>Theme</label><div style="display:flex;gap:10px;margin-top:6px">'+themeSel+'</div>'+
    '<button class="btn" style="margin-top:16px" onclick="saveSettings()">SAVE</button>'+
    '<button class="btn ghost sm" style="margin-top:8px" onclick="manageQuests()">✏️ MANAGE QUESTS</button>'+
@@ -798,7 +853,7 @@ function openSettings(){const p=S.profile;const themeSel=Object.keys(THEMES).map
    '<button class="btn danger sm" style="margin-top:8px" onclick="hardReset()">RESET ALL DATA</button>'+
    '<p class="tiny center" style="margin-top:12px">Data stays on this device. Export before switching phones.<br>The System · v'+APP_VERSION+'</p>','CLOSE');}
 function setTheme(t){S.theme=t;save();applyTheme();openSettings();}
-function saveSettings(){S.profile.name=$('#s_name').value.trim()||'Hunter';S.profile.units=$('#s_units').value;S.profile.goalWeight=parseFloat($('#s_goal').value)||null;S.profile.weightOn=$('#s_won').checked;S.finance.enabled=$('#s_mon').checked;save();$('#modal-host').innerHTML='';render();toast('Saved');}
+function saveSettings(){S.profile.name=$('#s_name').value.trim()||'Hunter';S.profile.units=$('#s_units').value;S.profile.goalWeight=parseFloat($('#s_goal').value)||null;S.profile.weightOn=$('#s_won').checked;S.finance.enabled=$('#s_mon').checked;S.sound=$('#s_snd').checked;if(S.sound)sfx('coin');save();$('#modal-host').innerHTML='';render();toast('Saved ✓');}
 function exportData(){const b=new Blob([JSON.stringify(S)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='thesystem-backup-'+todayStr()+'.json';a.click();}
 function importData(){const i=document.createElement('input');i.type='file';i.accept='.json,application/json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const parsed=JSON.parse(r.result);if(!parsed||!parsed.profile){alert('That doesn\'t look like a System backup.');return;}S=normalize(parsed);save();$('#modal-host').innerHTML='';render();toast('Backup restored');}catch(x){alert('Invalid or corrupted file.');}};r.readAsText(f);};i.click();}
 function hardReset(){if(confirm('Erase ALL data? This cannot be undone.')){localStorage.removeItem(STORE);S=defaultState();save();$('#modal-host').innerHTML='';render();}}
